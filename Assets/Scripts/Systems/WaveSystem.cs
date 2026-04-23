@@ -5,6 +5,10 @@ public class WaveSystem : MonoBehaviour {
     [SerializeField] private MinionConfigSO berserkerConfig;
     [SerializeField] private MinionConfigSO spitterConfig;
 
+    [SerializeField] private GameObject runnerPrefab;
+    [SerializeField] private GameObject berserkerPrefab;
+    [SerializeField] private GameObject spitterPrefab;
+
     public struct PhaseParams {
         public float interval;
         public int countMin, countMax;
@@ -49,10 +53,26 @@ public class WaveSystem : MonoBehaviour {
         int count = Random.Range(p.countMin, p.countMax + 1);
         for (int i = 0; i < count; i++) {
             var type = WeightedRandom(p);
-            float x = Random.Range(GameConfig.SPAWN_X_MIN, GameConfig.SPAWN_X_MAX);
-            float y = Random.Range(GameConfig.SPAWN_Y_MIN, GameConfig.SPAWN_Y_MAX);
-            GameEvents.RaiseSpawnMinion(type, new Vector2(x, y));
+            float x  = Random.Range(GameConfig.SPAWN_X_MIN, GameConfig.SPAWN_X_MAX);
+            float y  = Random.Range(GameConfig.SPAWN_Y_MIN, GameConfig.SPAWN_Y_MAX);
+            var   pos = new Vector2(x, y);
+            SpawnMinion(type, pos);
+            GameEvents.RaiseSpawnMinion(type, pos);
         }
+    }
+
+    private void SpawnMinion(MinionType type, Vector2 pos) {
+        GameObject prefab = type switch {
+            MinionType.Runner   => runnerPrefab,
+            MinionType.Berserker => berserkerPrefab,
+            MinionType.Spitter  => spitterPrefab,
+            _ => runnerPrefab
+        };
+        if (prefab == null) {
+            Debug.LogWarning($"[WaveSystem] Prefab for {type} not assigned.");
+            return;
+        }
+        Instantiate(prefab, pos, Quaternion.identity);
     }
 
     private MinionType WeightedRandom(PhaseParams p) {
