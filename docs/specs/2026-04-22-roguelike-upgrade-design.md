@@ -13,8 +13,13 @@
 ### 1.1 새 열거형 (GameEvents.cs에 추가)
 
 ```csharp
-public enum WeaponType { Shotgun, Sniper, MachineGun, Railgun, Melee, HeavyWeapon }
+public enum WeaponType { Shotgun, Sniper, MachineGun, Railgun, Melee, HeavyWeapon, Healer, Buffer }
 public enum ElementType { Light, Dark, Fire, Ice, Electric }
+```
+
+`BulletType` (GameEvents.cs 기존 enum에 추가):
+```csharp
+public enum BulletType { Single, Shotgun, Rocket, Heal, Buff }
 ```
 
 ### 1.2 SquadMemberConfigSO 변경
@@ -29,11 +34,21 @@ public ElementType element;
 
 기존 필드 유지, 추가:
 ```csharp
-public float maxRange;       // 0 = 무제한. 샷건=2.5, 기관총=4.0
-public float rangeDropoff;   // 최대사거리에서 남는 데미지 비율 (0~1). 샷건=0.1, 기관총=0.5
-public int   penetration;    // 관통 대상 수. 0=없음, 저격=1, 레일건=999
-public bool  isMelee;        // true면 총알 없이 근접 공격
-public float meleeRadius;    // 근접 공격 감지 반경 (isMelee=true 전용)
+public float maxRange;          // 0 = 무제한. 샷건=2.5, 기관총=4.0
+public float rangeDropoff;      // 최대사거리에서 남는 데미지 비율 (0~1). 샷건=0.1, 기관총=0.5
+public int   penetration;       // 관통 대상 수. 0=없음, 저격=1, 레일건=999
+public bool  isMelee;           // true면 총알 없이 근접 공격
+public float meleeRadius;       // 근접 공격 감지 반경 (isMelee=true 전용)
+
+// 지원 무기 전용 (Healer / Buffer)
+public float auraRadius;        // 패시브 오라 반경
+public float auraHealPerSec;    // Healer: 초당 아군 회복량 (오라)
+public float auraBuffMult;      // Buffer: 오라 내 아군 데미지 배율 (예: 1.15)
+public float auraBuffFireRate;  // Buffer: 오라 내 아군 발사속도 배율 (예: 0.9 → 10% 빠름)
+public float activeCooldown;    // 액티브 능력 쿨타임 (초)
+public float activeHealAmount;  // Healer: 액티브 집중 회복량
+public float activeBuffMult;    // Buffer: 액티브 임시 강화 데미지 배율
+public float activeBuffDuration;// Buffer: 액티브 버프 지속 시간 (초)
 ```
 
 ### 1.4 무기 타입별 기준 스탯
@@ -46,6 +61,88 @@ public float meleeRadius;    // 근접 공격 감지 반경 (isMelee=true 전용
 | Railgun | 280 | 4.0s | 2 | 3.0s | 1 | 0° | 0 | 0 | 1.0 | 999 | false |
 | Melee | 55 | 0.5s | 0 | 0s | 0 | 0° | 0 | 0 | 1.0 | 0 | true |
 | HeavyWeapon | 90 | 2.5s | 3 | 3.0s | 1 | 5° | 1.5 | 0 | 1.0 | 0 | false |
+| Healer | — | — | — | — | — | — | — | — | — | — | false |
+| Buffer | — | — | — | — | — | — | — | — | — | — | false |
+
+*Healer·Buffer는 아래 1.7 지원 무기 스탯 표 참조*
+
+### 1.7 지원 무기 기준 스탯
+
+| 무기 | bulletType | auraRadius | auraHealPerSec | auraBuffMult | auraBuffFireRate | activeCooldown | activeHealAmount | activeBuffMult | activeBuffDuration |
+|------|-----------|-----------|---------------|------------|----------------|--------------|----------------|--------------|-----------------|
+| Healer | Heal | 2.0 | 3 HP/s | — | — | 8s | 40 HP | — | — |
+| Buffer | Buff | 2.5 | — | 1.15 (+15%) | 0.9 (10% 빠름) | 10s | — | 1.40 (+40%) | 5s |
+
+### 1.8 지원 무기 동작 상세
+
+#### Healer (힐러)
+```
+패시브 오라 (매 Update):
+  - auraRadius 내 아군 탐색
+  - 각 아군 HP += auraHealPerSec × Time.deltaTime
+  - MaxHp 초과 불가
+
+액티브 (activeCooldown 마다):
+  - HP 비율이 가장 낮은 아군 1명 탐색
+  - BulletType.Heal 탄환 발사 → 해당 아군에게 비행
+  - 탄환 착탄 시 SquadMemberController.Heal(activeHealAmount) 호출
+  - 탄환은 적에게 충돌해도 효과 없음
+```
+
+#### Buffer (버퍼)
+```
+패시브 오라 (매 Update):
+  - auraRadius 내 아군 탐색
+  - 각 아군에게 오라 버프 플래그 설정:
+      auraBuffActive = true
+      _auraDamageMult = auraBuffMult
+      _auraFireRateMult = auraBuffFireRate
+  - 오라 밖으로 나간 아군은 즉시 오라 버프 해제
+
+액티브 (activeCooldown 마다):
+  - 가장 가까운 아군 1명에게 BulletType.Buff 탄환 발사
+  - 착탄 시 SquadMemberController.ApplyTempBuff(activeBuffMult, activeBuffDuration) 호출
+  - 임시 버프는 오라 버프와 별도 곱연산 적용
+  - 지속 시간 종료 후 자동 해제
+```
+
+#### SquadMemberController 변경 사항
+```csharp
+// 추가 필드
+public bool  AuraBuffActive    { get; set; } = false;
+public float AuraDamageMult    { get; set; } = 1f;
+public float AuraFireRateMult  { get; set; } = 1f;
+private float _tempBuffMult    = 1f;
+private float _tempBuffTimer   = 0f;
+
+// 추가 메서드
+public void Heal(float amount);                              // HP 회복 (MaxHp 초과 불가)
+public void ApplyTempBuff(float mult, float duration);      // 임시 버프 설정
+
+// TryFire에서 최종 데미지 = base × RunState보너스 × AuraDamageMult × _tempBuffMult
+// _fireTimer에 AuraFireRateMult × RunState.fireRateMult 적용
+```
+
+#### AimController 변경 사항
+```
+weaponType == Healer → 가장 HP 비율 낮은 아군을 타겟 (액티브 탄환 발사용)
+weaponType == Buffer → 가장 가까운 아군을 타겟 (액티브 탄환 발사용)
+오라 처리는 AimController가 아닌 SquadMemberController.Update에서 직접 처리
+```
+
+#### Bullet.cs 변경 사항
+```
+BulletType.Heal:
+  - 충돌 레이어를 "Squad" 레이어로만 감지
+  - 착탄 시 SquadMemberController.Heal(_damage) 호출
+  - 적 충돌 무시
+
+BulletType.Buff:
+  - 충돌 레이어를 "Squad" 레이어로만 감지
+  - 착탄 시 SquadMemberController.ApplyTempBuff(_splashRadius, _damage) 재활용
+    (splashRadius → buffDuration, damage → buffMult로 BulletData 필드 재활용)
+  - 적 충돌 무시
+```
 
 ### 1.5 UpgradeCardSO
 
@@ -258,13 +355,14 @@ public void Hide();
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `GameEvents.cs` | `WeaponType`, `ElementType` 열거형 / `OnStageCleared` 이벤트 추가 |
+| `GameEvents.cs` | `WeaponType`(+Healer,Buffer) / `BulletType`(+Heal,Buff) / `ElementType` / `OnStageCleared` 추가 |
 | `SquadMemberConfigSO.cs` | `weaponType`, `element` 필드 추가 |
-| `WeaponConfig.cs` | `maxRange`, `rangeDropoff`, `penetration`, `isMelee`, `meleeRadius` 추가 |
+| `WeaponConfig.cs` | 공격 무기 필드 + 지원 무기 필드(`aura*`, `active*`) 추가 |
 | `GameManager.cs` | `HandleBossDefeated` Win 전환 제거 |
 | `BossController.cs` | `InitWithDifficulty(float mult)` 추가, 런타임 스탯 변수 분리 |
-| `SquadMemberController.cs` | `ApplyRunStateBonus()` public 메서드 추가 (Awake + StageManager.ResetStage 모두 호출) / `isMelee` 분기 처리 |
-| `Bullet.cs` | `penetration` 관통 처리 / `maxRange` 거리 기반 데미지 감소 |
+| `SquadMemberController.cs` | `ApplyRunStateBonus()` / `isMelee` 분기 / `Heal()` / `ApplyTempBuff()` / 오라 버프 필드 추가 |
+| `AimController.cs` | Healer→최저HP 아군 타겟 / Buffer→최근접 아군 타겟 분기 추가 |
+| `Bullet.cs` | `penetration` 관통 / `maxRange` 거리 감소 / `BulletType.Heal·Buff` 아군 착탄 처리 |
 | `BombingSystem.cs` | 다중 충전 지원 (`BombCharges`) |
 | `TerrainManager.cs` | `ResetForStage(int extraBarricades)` 추가 |
 | `ResultUI.cs` | 최고 스테이지 수 표시 |
