@@ -46,6 +46,7 @@ public class TerrainManager : MonoBehaviour {
     public void BossSmashBlock(TerrainBlock block, float dmg) {
         for (int i = 0; i < 3; i++) {
             if (!_roadBlockAlive[i]) continue;
+            if (roadBlockRenderers == null || i >= roadBlockRenderers.Length || roadBlockRenderers[i] == null) continue;
             if (Vector2.Distance(roadBlockRenderers[i].transform.position, block.position) < 0.5f) {
                 _roadBlockHp[i] = Mathf.Max(0f, _roadBlockHp[i] - dmg);
                 UpdateBlockSprite(i);
@@ -58,6 +59,7 @@ public class TerrainManager : MonoBehaviour {
     public void MinionDamage(Vector2 targetPos, float dmg) {
         for (int i = 0; i < 3; i++) {
             if (!_barricadeAlive[i]) continue;
+            if (barricadeRenderers == null || i >= barricadeRenderers.Length || barricadeRenderers[i] == null) continue;
             if (Vector2.Distance(barricadeRenderers[i].transform.position, targetPos) < 0.5f) {
                 _barricadeHp[i] = Mathf.Max(0f, _barricadeHp[i] - dmg);
                 if (_barricadeHp[i] <= 0f) _barricadeAlive[i] = false;
@@ -68,16 +70,23 @@ public class TerrainManager : MonoBehaviour {
     }
 
     public Vector2? GetAliveBarricade() {
+        if (barricadeRenderers == null) return null;
         for (int i = 0; i < 3; i++)
-            if (_barricadeAlive[i]) return barricadeRenderers[i].transform.position;
+            if (_barricadeAlive[i] && i < barricadeRenderers.Length && barricadeRenderers[i] != null)
+                return barricadeRenderers[i].transform.position;
         return null;
     }
 
-    public Vector2? GetWallTarget() => _wallHp > 0f ? (Vector2?)wallRenderer.transform.position : null;
+    public Vector2? GetWallTarget() {
+        if (_wallHp <= 0f || wallRenderer == null) return null;
+        return wallRenderer.transform.position;
+    }
 
     public TerrainBlock? GetRoadBlockAhead(float bossX) {
+        if (roadBlockRenderers == null) return null;
         for (int i = 0; i < 3; i++) {
             if (!_roadBlockAlive[i]) continue;
+            if (i >= roadBlockRenderers.Length || roadBlockRenderers[i] == null) continue;
             float rx = roadBlockRenderers[i].transform.position.x;
             if (bossX <= rx + 0.75f && bossX > rx - 0.15f)
                 return new TerrainBlock { position = roadBlockRenderers[i].transform.position, alive = true };

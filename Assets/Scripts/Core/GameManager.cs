@@ -20,6 +20,13 @@ public class GameManager : MonoBehaviour {
         DontDestroyOnLoad(gameObject);
     }
 
+    void Start() {
+        State            = GameState.Playing;
+        _deadMemberCount = 0;
+        _endingGame      = false;
+        RegisterSquadSize(FindObjectsOfType<SquadMemberController>().Length);
+    }
+
     void OnDestroy() {
         if (Instance == this) Instance = null;
     }

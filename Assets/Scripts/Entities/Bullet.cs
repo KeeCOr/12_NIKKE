@@ -28,7 +28,7 @@ public class Bullet : MonoBehaviour {
     }
 
     void Update() {
-        transform.Translate(Vector2.right * _speed * Time.deltaTime, Space.World);
+        transform.Translate(Vector2.right * _speed * Time.deltaTime, Space.Self);
         _lifetime += Time.deltaTime;
         if (_lifetime >= MAX_LIFETIME) ReturnToPool();
     }

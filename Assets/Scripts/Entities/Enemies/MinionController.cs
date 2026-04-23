@@ -87,7 +87,6 @@ public class MinionController : MonoBehaviour {
 
     private void Die() {
         IsAlive = false;
-        gameObject.SetActive(false);
-        // ObjectPool return is handled by WaveSystem/spawn caller
+        Destroy(gameObject);
     }
 }
