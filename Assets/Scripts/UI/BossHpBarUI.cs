@@ -1,10 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class BossHpBarUI : MonoBehaviour {
     [SerializeField] private Slider hpSlider;
-    [SerializeField] private TextMeshProUGUI hpText;
+    [SerializeField] private Text hpText;
     [SerializeField] private Image[] partIcons; // 7, order: HEAD ARM_L ARM_R LEG_L LEG_R CHEST CORE
     [SerializeField] private Color destroyedColor = new Color(0.3f, 0f, 0f);
 

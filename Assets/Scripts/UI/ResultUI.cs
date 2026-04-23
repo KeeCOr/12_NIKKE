@@ -1,9 +1,9 @@
-using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public class ResultUI : MonoBehaviour {
-    [SerializeField] private TextMeshProUGUI resultText;
+    [SerializeField] private Text resultText;
     [SerializeField] private GameObject winPanel;
     [SerializeField] private GameObject losePanel;
 
