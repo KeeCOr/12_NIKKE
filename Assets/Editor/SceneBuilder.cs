@@ -819,7 +819,7 @@ public static class SceneBuilder {
         WeaponConfig[] weapons = {
             new WeaponConfig { name="Barrett", magazineSize= 6, damage=120f, fireRate=2.20f, reloadTime=1.8f, bulletSpeed=2500f, bulletType=BulletType.Single, pellets=1, spread= 0f },
             new WeaponConfig { name="M249",    magazineSize=40, damage= 12f, fireRate=0.08f, reloadTime=3.5f, bulletSpeed=1500f, bulletType=BulletType.Single, pellets=1, spread= 8f },
-            new WeaponConfig { name="KS-23",   magazineSize= 4, damage= 18f, fireRate=0.90f, reloadTime=2.5f, bulletSpeed= 800f, bulletType=BulletType.Shotgun,pellets=8, spread=20f },
+            new WeaponConfig { name="KS-23",   magazineSize= 4, damage= 18f, fireRate=0.90f, reloadTime=2.5f, bulletSpeed= 800f, bulletType=BulletType.Shotgun,pellets=8, spread=20f, maxRange=4.5f },
             new WeaponConfig { name="RPG",     magazineSize= 3, damage= 90f, fireRate=2.50f, reloadTime=3.0f, bulletSpeed= 800f, bulletType=BulletType.Rocket, pellets=1, spread= 5f, splashRadius=150f },
             new WeaponConfig { name="Railgun", magazineSize= 2, damage=280f, fireRate=4.00f, reloadTime=3.0f, bulletSpeed=3000f, bulletType=BulletType.Single, pellets=1, spread= 0f },
         };

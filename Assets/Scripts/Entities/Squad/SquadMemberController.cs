@@ -61,35 +61,44 @@ public class SquadMemberController : MonoBehaviour {
             _b.center.x + _b.extents.x * 0.85f,
             _b.center.y + _b.extents.y * 0.30f);
         float   angle  = Mathf.Atan2(aimPos.y - muzzle.y, aimPos.x - muzzle.x);
+        float   dist   = Vector2.Distance(muzzle, aimPos);
 
-        float dmg            = config.weapon.damage;
+        // Shotgun: refuse to fire when target is out of effective range
+        if (config.weapon.bulletType == BulletType.Shotgun
+            && config.weapon.maxRange > 0f
+            && dist > config.weapon.maxRange)
+            return;
+
+        float dmg             = config.weapon.damage;
         float effectiveSpread = config.weapon.spread;
         float effectiveSplash = config.weapon.splashRadius * 0.01f;
 
         switch (config.special) {
             case SpecialType.WeakpointBonus:
-                // Charlie SNIPER: bonus on CORE
                 if (_aim.TargetPartId == "CORE")
                     dmg *= config.specialVal;
                 break;
 
             case SpecialType.WeakpointMark:
-                // Echo DMR: always deals specialVal× damage to any targeted part
                 if (!string.IsNullOrEmpty(_aim.TargetPartId))
                     dmg *= config.specialVal;
                 break;
 
             case SpecialType.BurstAccuracy:
-                // Bravo AR: tighter spread
+                // Bravo AR: tighter base spread, then distance drift re-added
                 if (effectiveSpread > 0f)
                     effectiveSpread /= config.specialVal;
                 break;
 
             case SpecialType.RocketSplash:
-                // Delta ROCKET: larger splash radius
                 effectiveSplash *= config.specialVal;
                 break;
         }
+
+        // AR (single-pellet with spread): bullets drift further at range.
+        // Extra spread starts growing past 3 wu — at 12 wu it adds ~10 degrees.
+        if (config.weapon.bulletType == BulletType.Single && effectiveSpread > 0f)
+            effectiveSpread += Mathf.Max(0f, dist - 3f) * 1.2f;
 
         // Echo mark bonus (applied by external system)
         if (IsEchoMarkActive) dmg *= 1.2f;
@@ -104,7 +113,8 @@ public class SquadMemberController : MonoBehaviour {
             splashRadius = effectiveSplash,
             pellets      = config.weapon.pellets,
             spread       = effectiveSpread,
-            targetPartId = _aim.TargetPartId
+            targetPartId = _aim.TargetPartId,
+            maxRange     = config.weapon.maxRange
         });
 
         CurrentAmmo--;

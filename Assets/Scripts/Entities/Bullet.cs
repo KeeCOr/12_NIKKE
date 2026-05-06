@@ -16,6 +16,8 @@ public class Bullet : MonoBehaviour {
     private static readonly Collider2D[] _splashBuffer = new Collider2D[32];
 
     private TrailRenderer _trail;
+    private float   _maxRange;
+    private Vector2 _spawnPos;
     void Awake() { _trail = GetComponent<TrailRenderer>(); }
 
     public void Initialize(BulletData data, BossController boss) {
@@ -24,6 +26,8 @@ public class Bullet : MonoBehaviour {
         _splashRadius = data.splashRadius;
         _targetPartId = data.targetPartId;
         _bulletType   = data.bulletType;
+        _maxRange     = data.maxRange;
+        _spawnPos     = data.origin;
         _boss         = boss;
         _lifetime     = 0f;
         transform.position = data.origin;
@@ -34,7 +38,9 @@ public class Bullet : MonoBehaviour {
     void Update() {
         transform.Translate(Vector2.right * _speed * Time.deltaTime, Space.Self);
         _lifetime += Time.deltaTime;
-        if (_lifetime >= MAX_LIFETIME) ReturnToPool();
+        if (_lifetime >= MAX_LIFETIME) { ReturnToPool(); return; }
+        if (_maxRange > 0f && Vector2.Distance(transform.position, _spawnPos) >= _maxRange)
+            ReturnToPool();
     }
 
     void OnTriggerEnter2D(Collider2D other) {

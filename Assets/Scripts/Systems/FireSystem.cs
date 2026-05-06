@@ -44,8 +44,8 @@ public class FireSystem : MonoBehaviour {
         VFXSystem.Instance?.ShowMuzzleFlash(data.origin);
         int pellets = Mathf.Max(1, data.pellets);
         for (int i = 0; i < pellets; i++) {
-            // data.angle is radians; data.spread is degrees — convert spread offset to radians
-            float spreadAngle = (pellets > 1)
+            // Apply spread for multi-pellet weapons AND single-pellet weapons that have spread > 0 (e.g. AR)
+            float spreadAngle = data.spread > 0f
                 ? data.angle + Mathf.Deg2Rad * Random.Range(-data.spread / 2f, data.spread / 2f)
                 : data.angle;
             var bullet   = _pool.Get();

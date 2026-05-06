@@ -56,6 +56,7 @@ public struct BulletData {
     public int pellets;
     public float spread;       // degrees — designer-facing cone half-width, converted to rad in FireSystem
     public string targetPartId;
+    public float maxRange;     // world units; 0 = unlimited travel distance
 }
 
 public enum BulletType { Single, Shotgun, Rocket }
