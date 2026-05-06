@@ -15,8 +15,10 @@ public class InputManager : MonoBehaviour {
     private InputAction _pointerPosition;
     private InputAction _primaryPress;
 #endif
-    private int    _selectedMember = -1;
-    private bool   _isDragging;
+    private int     _selectedMember  = -1;
+    private bool    _isDragging;
+    private bool    _moved;           // true once pointer has moved > threshold after press
+    private Vector2 _pressWorldPos;
 
     void Awake() {
         if (Instance != null) { Destroy(gameObject); return; }
@@ -55,31 +57,55 @@ public class InputManager : MonoBehaviour {
             ? (Vector2)gameCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, -gameCamera.transform.position.z))
             : screenPos;
 
+        // ── Press start ───────────────────────────────────────────────────────
         if (pressed && !_isDragging) {
+            _isDragging    = true;
+            _moved         = false;
+            _pressWorldPos = worldPos;
+
             int hit = GetSquadMemberAt(worldPos);
-            if (hit >= 0) {
-                int next = (_selectedMember == hit) ? -1 : hit;
-                SetSelection(next);
-                return;
-            }
-            _isDragging = true;
+            // Select a different member; selecting the same member waits for click-release
+            if (hit >= 0 && hit != _selectedMember)
+                SetSelection(hit);
         }
 
-        if (_isDragging && pressed && _selectedMember >= 0 && _selectedMember < aimControllers.Length) {
-            aimControllers[_selectedMember].DragTarget = worldPos;
-            var hit2D = Physics2D.OverlapPoint(worldPos);
-            if (hit2D != null) {
-                var part   = hit2D.GetComponent<BossPartController>();
-                if (part   != null) aimControllers[_selectedMember].SetUserTargetPart(part);
-                var minion = hit2D.GetComponent<MinionController>();
-                if (minion != null) aimControllers[_selectedMember].SetUserTargetMinion(minion);
+        // ── During drag ───────────────────────────────────────────────────────
+        if (_isDragging && pressed) {
+            if (Vector2.Distance(worldPos, _pressWorldPos) > 0.12f)
+                _moved = true;
+
+            if (_selectedMember >= 0 && _selectedMember < aimControllers.Length) {
+                aimControllers[_selectedMember].DragTarget = worldPos;
+
+                // OverlapPointAll so stacked colliders (trigger + body) are all checked
+                var cols = Physics2D.OverlapPointAll(worldPos);
+                foreach (var col in cols) {
+                    var part = col.GetComponent<BossPartController>();
+                    if (part != null && part.IsActive && !part.IsDestroyed) {
+                        aimControllers[_selectedMember].SetUserTargetPart(part);
+                        break;
+                    }
+                    var minion = col.GetComponent<MinionController>();
+                    if (minion != null && minion.IsAlive) {
+                        aimControllers[_selectedMember].SetUserTargetMinion(minion);
+                        break;
+                    }
+                }
             }
         }
 
+        // ── Release ───────────────────────────────────────────────────────────
         if (!pressed && _isDragging) {
             _isDragging = false;
             if (_selectedMember >= 0 && _selectedMember < aimControllers.Length)
                 aimControllers[_selectedMember].DragTarget = null;
+
+            // Pure click (no movement): deselect if tapping same member or empty area
+            if (!_moved) {
+                int hit = GetSquadMemberAt(_pressWorldPos);
+                if (hit < 0 || hit == _selectedMember)
+                    SetSelection(-1);
+            }
         }
     }
 
