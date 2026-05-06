@@ -11,7 +11,7 @@ public class BossHpBarUI : MonoBehaviour {
 
     public void OnBossHpChanged(float hp, float maxHp) {
         if (hpSlider != null) hpSlider.value = hp / maxHp;
-        if (hpText   != null) hpText.text = $"{Mathf.CeilToInt(hp)} / {Mathf.CeilToInt(maxHp)}";
+        if (hpText   != null) hpText.text = $"BOSS  {Mathf.CeilToInt(hp)} / {Mathf.CeilToInt(maxHp)}";
     }
 
     public void OnPartDestroyed(string partId) {

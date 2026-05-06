@@ -41,6 +41,7 @@ public class FireSystem : MonoBehaviour {
     }
 
     private void HandleFireBullet(BulletData data) {
+        VFXSystem.Instance?.ShowMuzzleFlash(data.origin);
         int pellets = Mathf.Max(1, data.pellets);
         for (int i = 0; i < pellets; i++) {
             // data.angle is radians; data.spread is degrees — convert spread offset to radians

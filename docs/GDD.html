@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SquadVsMonster — 게임 기획서</title>
+<style>
+  :root {
+    --bg:       #0c0f1a;
+    --surface:  #151825;
+    --card:     #1c2030;
+    --border:   #2a3050;
+    --accent1:  #ff7c20;
+    --accent2:  #4a9eff;
+    --accent3:  #3ec96a;
+    --accent4:  #c84aff;
+    --accent5:  #20e8e8;
+    --danger:   #ff3a3a;
+    --text:     #e8eaf0;
+    --muted:    #8892a8;
+    --head:     #ffd54f;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── layout ── */
+  .wrapper { max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ── hero ── */
+  .hero {
+    background: linear-gradient(135deg, #0e1428 0%, #1a0e28 50%, #0e1428 100%);
+    border-bottom: 2px solid var(--border);
+    padding: 60px 24px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 38px,
+      rgba(255,255,255,.018) 38px, rgba(255,255,255,.018) 40px
+    );
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(255,124,32,.15);
+    border: 1px solid rgba(255,124,32,.4);
+    color: var(--accent1);
+    font-size: 11px; letter-spacing: 2px; font-weight: 700;
+    padding: 4px 14px; border-radius: 20px;
+    margin-bottom: 18px; text-transform: uppercase;
+  }
+  .hero h1 {
+    font-size: 52px; font-weight: 900; letter-spacing: -1px;
+    line-height: 1.1;
+    background: linear-gradient(90deg, #ff7c20, #ff4488, #c84aff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    margin-top: 12px; font-size: 17px; color: var(--muted);
+  }
+  .meta-row {
+    margin-top: 28px;
+    display: flex; justify-content: center; gap: 32px; flex-wrap: wrap;
+  }
+  .meta-item { font-size: 13px; color: var(--muted); }
+  .meta-item strong { color: var(--text); }
+
+  /* ── nav ── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin: 40px 0 0;
+    display: flex; flex-wrap: wrap; gap: 8px 24px;
+  }
+  .toc a {
+    color: var(--accent2); text-decoration: none; font-size: 13px;
+    font-weight: 600; letter-spacing: .3px;
+  }
+  .toc a:hover { color: #fff; }
+
+  /* ── section ── */
+  .section { margin-top: 56px; }
+  .section-header {
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 12px; margin-bottom: 28px;
+  }
+  .section-num {
+    background: var(--accent1);
+    color: #000; font-weight: 900; font-size: 12px;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  h2 { font-size: 24px; font-weight: 800; color: var(--head); }
+  h3 { font-size: 17px; font-weight: 700; color: var(--text); margin: 24px 0 10px; }
+  h4 { font-size: 14px; font-weight: 700; color: var(--muted); margin: 16px 0 6px;
+       text-transform: uppercase; letter-spacing: 1px; }
+
+  p { color: var(--muted); margin-bottom: 10px; }
+  p strong { color: var(--text); }
+
+  /* ── cards ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    position: relative;
+  }
+  .card-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 10px 0 0 10px; }
+  .card-name { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+  .card-role { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .card-stat { font-size: 12px; color: var(--muted); line-height: 1.9; }
+  .card-stat span { color: var(--text); font-weight: 600; }
+  .card-special {
+    margin-top: 8px; padding: 5px 8px;
+    background: rgba(255,255,255,.04);
+    border-radius: 6px;
+    font-size: 11px; color: #c0c8e0;
+    font-style: italic;
+  }
+
+  /* ── boss part grid ── */
+  .part-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+  }
+  .part-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .part-card .part-name { font-size: 13px; font-weight: 800; margin-bottom: 4px; }
+  .part-card .part-hp { font-size: 20px; font-weight: 900; line-height: 1; }
+  .part-card .part-mult { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .part-card .part-effect { font-size: 11px; color: #8892a8; margin-top: 6px; font-style: italic; }
+
+  /* ── table ── */
+  .tbl-wrap { overflow-x: auto; margin: 12px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: rgba(255,255,255,.04); }
+  th { padding: 9px 14px; text-align: left; color: var(--muted); font-weight: 700;
+       text-transform: uppercase; font-size: 11px; letter-spacing: .8px; border-bottom: 1px solid var(--border); }
+  td { padding: 9px 14px; border-bottom: 1px solid rgba(255,255,255,.04); color: var(--text); }
+  tr:hover td { background: rgba(255,255,255,.02); }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 700; letter-spacing: .5px;
+  }
+
+  /* ── flow diagram ── */
+  .flow {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-size: 13px;
+  }
+  .flow-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0;
+    flex-wrap: wrap;
+  }
+  .flow-box {
+    background: rgba(255,255,255,.06);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 14px;
+    font-weight: 600; white-space: nowrap;
+  }
+  .flow-arrow { color: var(--muted); font-size: 16px; }
+  .flow-note { font-size: 11px; color: var(--muted); font-style: italic; margin-left: 4px; }
+
+  /* ── timeline ── */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .tl-item { display: flex; gap: 16px; }
+  .tl-line { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 32px; }
+  .tl-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent1); flex-shrink: 0; margin-top: 4px; }
+  .tl-bar { flex: 1; width: 2px; background: var(--border); }
+  .tl-content { padding-bottom: 20px; }
+  .tl-time { font-size: 11px; color: var(--accent2); font-weight: 700; margin-bottom: 3px; }
+  .tl-desc { font-size: 13px; color: var(--text); }
+  .tl-sub { font-size: 12px; color: var(--muted); }
+
+  /* ── stat pill ── */
+  .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .pill {
+    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    background: rgba(255,255,255,.07); border: 1px solid var(--border);
+  }
+  .pill-ok { background: rgba(62,201,106,.15); border-color: rgba(62,201,106,.4); color: var(--accent3); }
+  .pill-warn { background: rgba(255,124,32,.12); border-color: rgba(255,124,32,.4); color: var(--accent1); }
+  .pill-danger { background: rgba(255,58,58,.12); border-color: rgba(255,58,58,.4); color: var(--danger); }
+
+  /* ── callout ── */
+  .callout {
+    border-left: 3px solid var(--accent1);
+    background: rgba(255,124,32,.06);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 13px; color: var(--text);
+  }
+
+  /* ── color chips ── */
+  .chip { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+
+  footer { margin-top: 80px; text-align: center; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 28px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrapper">
+    <div class="hero-badge">Game Design Document</div>
+    <h1>SquadVsMonster</h1>
+    <p class="hero-sub">5인 분대 vs 보스 몬스터 — 전략 방어 + 로그라이크 루프</p>
+    <div class="meta-row">
+      <div class="meta-item">엔진 <strong>Unity 2022.3 LTS</strong></div>
+      <div class="meta-item">장르 <strong>전략 디펜스 / 로그라이크</strong></div>
+      <div class="meta-item">플랫폼 <strong>PC · Mobile (2D)</strong></div>
+      <div class="meta-item">작성일 <strong>2026-04-23</strong></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrapper">
+
+  <nav class="toc">
+    <a href="#s1">1. 게임 개요</a>
+    <a href="#s2">2. 핵심 루프</a>
+    <a href="#s3">3. 분대 (Squad)</a>
+    <a href="#s4">4. 보스</a>
+    <a href="#s5">5. 미니언</a>
+    <a href="#s6">6. 지형 & 방어선</a>
+    <a href="#s7">7. 입력 & 조작</a>
+    <a href="#s8">8. 시스템</a>
+    <a href="#s9">9. 로그라이크 루프 (예정)</a>
+    <a href="#s10">10. UI 레이아웃</a>
+    <a href="#s11">11. 기술 스택</a>
+  </nav>
+
+  <!-- 1. 게임 개요 -->
+  <section class="section" id="s1">
+    <div class="section-header"><div class="section-num">1</div><h2>게임 개요</h2></div>
+
+    <p>
+      <strong>SquadVsMonster</strong>는 5명의 분대원을 지휘하여 거대 보스 몬스터의 진격을 막는
+      <strong>실시간 전략 디펜스 게임</strong>입니다. 플레이어는 분대원을 선택·조준하고,
+      보스의 각 신체 부위를 정밀 타격해 효율적으로 격파해야 합니다.
+    </p>
+    <p>
+      보스 처치 후에는 <strong>로그라이크 강화 루프</strong>를 통해 분대를 업그레이드하고
+      점점 강해지는 다음 스테이지에 도전합니다.
+    </p>
+
+    <div class="callout">
+      핵심 차별점 — "부위 파괴"에 따른 보스 행동 변화 + 선택적 조준으로 인한
+      즉각적인 전략적 피드백
+    </div>
+
+    <h3>게임 목표</h3>
+    <div class="pill-row">
+      <span class="pill pill-ok">보스 HP 0 → 승리</span>
+      <span class="pill pill-danger">방벽 HP 0 → 보스 진격 → 방어선 돌파 → 패배</span>
+      <span class="pill pill-danger">분대 전멸 → 패배</span>
+    </div>
+
+    <h3>카메라 & 좌표계</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>항목</th><th>값</th></tr></thead>
+        <tbody>
+          <tr><td>카메라 타입</td><td>2D Orthographic, Size 4.0</td></tr>
+          <tr><td>카메라 중심</td><td>(7.5, 2.5)</td></tr>
+          <tr><td>화면 X 범위</td><td>0.39 ~ 14.61 (월드)</td></tr>
+          <tr><td>방어선 (DEFENSE_LINE)</td><td>X = 1.3</td></tr>
+          <tr><td>방벽 위치 (WALL_X)</td><td>X = 7.0, Y = 2.02</td></tr>
+          <tr><td>보스 시작 (BOSS_START_X)</td><td>X = 14.0</td></tr>
+          <tr><td>보스 정지 (BOSS_STOP_X)</td><td>X = 4.2</td></tr>
+          <tr><td>보스 Y</td><td>Y = 3.3 (지면 위)</td></tr>
+          <tr><td>분대 Y</td><td>Y = 1.48</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 2. 핵심 루프 -->
+  <section class="section" id="s2">
+    <div class="section-header"><div class="section-num">2</div><h2>핵심 루프</h2></div>
+
+    <h3>단일 스테이지 흐름</h3>
+    <div class="flow">
+      <div class="flow-row">
+        <div class="flow-box" style="border-color:#4a9eff;color:#4a9eff">게임 시작</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">보스 진격</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">방벽 공격</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">분대 사격</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="border-color:#3ec96a;color:#3ec96a">보스 처치</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="border-color:#ffd54f;color:#ffd54f">스테이지 클리어</div>
+      </div>
+      <div class="flow-row" style="margin-top:8px">
+        <div class="flow-box" style="border-color:#ff3a3a;color:#ff3a3a">방벽 파괴</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">보스 방어선으로 진격 재개</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="border-color:#ff3a3a;color:#ff3a3a">방어선 돌파 → 패배</div>
+      </div>
+    </div>
+
+    <h3>전투 타임라인</h3>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-line"><div class="tl-dot"></div><div class="tl-bar"></div></div>
+        <div class="tl-content">
+          <div class="tl-time">0s ~</div>
+          <div class="tl-desc">보스 X=14.0 → X=4.2 진격 (speed 0.26)</div>
+          <div class="tl-sub">Phase 1 미니언(Runner) 주기적 스폰 시작</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-line"><div class="tl-dot" style="background:#4a9eff"></div><div class="tl-bar"></div></div>
+        <div class="tl-content">
+          <div class="tl-time">보스 X=4.2 도달</div>
+          <div class="tl-desc">방벽 공격 시작 (2.5s 주기, 80 dmg)</div>
+          <div class="tl-sub">방벽 HP 5000 → 0이 되면 방벽 파괴 이벤트 발생</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-line"><div class="tl-dot" style="background:#ff3a3a"></div><div class="tl-bar"></div></div>
+        <div class="tl-content">
+          <div class="tl-time">방벽 파괴 후</div>
+          <div class="tl-desc">보스 진격 재개 — 방어선 X=1.3 향해 이동</div>
+          <div class="tl-sub">분대가 방어선 전방에 배치되어 있어 직접 전투</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-line"><div class="tl-dot" style="background:#c84aff"></div><div class="tl-bar"></div></div>
+        <div class="tl-content">
+          <div class="tl-time">HP 50% + HEAD·CHEST 파괴 시</div>
+          <div class="tl-desc">분노(Enrage) 발동 — 속도 0.44, 충격파 6s 주기 30 dmg</div>
+          <div class="tl-sub">bodyRenderer 색상 → 암적색으로 변경</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-line"><div class="tl-dot" style="background:#3ec96a"></div></div>
+        <div class="tl-content">
+          <div class="tl-time">보스 HP 0</div>
+          <div class="tl-desc">사망 애니메이션(1.2s 페이드 아웃) → BossDefeated 이벤트</div>
+          <div class="tl-sub">결과 씬 또는 로그라이크 강화 UI 전환</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 분대 -->
+  <section class="section" id="s3">
+    <div class="section-header"><div class="section-num">3</div><h2>분대 (Squad)</h2></div>
+
+    <p>5명의 분대원이 방어선 앞에 고정 배치됩니다. 각자 고유한 무기와 특수 능력을 보유합니다.</p>
+
+    <h3>분대원 스탯</h3>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-accent" style="background:#4a9eff"></div>
+        <div class="card-name" style="color:#4a9eff">ALPHA</div>
+        <div class="card-role">Sniper</div>
+        <div class="card-stat">
+          HP <span>90</span>&nbsp;·&nbsp;
+          탄창 <span>6</span>&nbsp;·&nbsp;
+          데미지 <span>120</span><br>
+          발사간격 <span>2.20s</span>&nbsp;·&nbsp;
+          장전 <span>1.8s</span><br>
+          탄속 <span>2500</span>&nbsp;·&nbsp;
+          관통 <span>×1</span>
+        </div>
+        <div class="card-special">약점 보너스 — CORE 타격 시 데미지 ×2.0</div>
+      </div>
+      <div class="card">
+        <div class="card-accent" style="background:#ff8c30"></div>
+        <div class="card-name" style="color:#ff8c30">BRAVO</div>
+        <div class="card-role">Assault Rifle (M249)</div>
+        <div class="card-stat">
+          HP <span>120</span>&nbsp;·&nbsp;
+          탄창 <span>40</span>&nbsp;·&nbsp;
+          데미지 <span>12</span><br>
+          발사간격 <span>0.08s</span>&nbsp;·&nbsp;
+          장전 <span>3.5s</span><br>
+          산탄 <span>8°</span>
+        </div>
+        <div class="card-special">연사 집중 — 산탄 ÷1.3 (버스트 정확도)</div>
+      </div>
+      <div class="card">
+        <div class="card-accent" style="background:#3ec96a"></div>
+        <div class="card-name" style="color:#3ec96a">CHARLIE</div>
+        <div class="card-role">Shotgun (KS-23)</div>
+        <div class="card-stat">
+          HP <span>100</span>&nbsp;·&nbsp;
+          탄창 <span>4</span>&nbsp;·&nbsp;
+          데미지 <span>18 × 8발</span><br>
+          발사간격 <span>0.90s</span>&nbsp;·&nbsp;
+          장전 <span>2.5s</span><br>
+          산탄 <span>20°</span>&nbsp;·&nbsp;
+          탄속 <span>800</span>
+        </div>
+        <div class="card-special">특수 없음 (None)</div>
+      </div>
+      <div class="card">
+        <div class="card-accent" style="background:#c84aff"></div>
+        <div class="card-name" style="color:#c84aff">DELTA</div>
+        <div class="card-role">Rocket (RPG)</div>
+        <div class="card-stat">
+          HP <span>130</span>&nbsp;·&nbsp;
+          탄창 <span>3</span>&nbsp;·&nbsp;
+          데미지 <span>90</span><br>
+          발사간격 <span>2.50s</span>&nbsp;·&nbsp;
+          장전 <span>3.0s</span><br>
+          폭발 반경 <span>1.5</span>&nbsp;·&nbsp;
+          산탄 <span>5°</span>
+        </div>
+        <div class="card-special">로켓 스플래시 — 폭발 반경 ×1.8</div>
+      </div>
+      <div class="card">
+        <div class="card-accent" style="background:#20e8e8"></div>
+        <div class="card-name" style="color:#20e8e8">ECHO</div>
+        <div class="card-role">DMR (Railgun)</div>
+        <div class="card-stat">
+          HP <span>80</span>&nbsp;·&nbsp;
+          탄창 <span>2</span>&nbsp;·&nbsp;
+          데미지 <span>280</span><br>
+          발사간격 <span>4.00s</span>&nbsp;·&nbsp;
+          장전 <span>3.0s</span><br>
+          탄속 <span>3000</span>
+        </div>
+        <div class="card-special">약점 마킹 — 표시된 부위 데미지 ×1.4</div>
+      </div>
+    </div>
+
+    <h3>분대원 슬롯 배치</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>슬롯</th><th>멤버</th><th>월드 X</th><th>월드 Y</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>Alpha</td><td>0.68</td><td>1.48</td></tr>
+          <tr><td>1</td><td>Bravo</td><td>1.28</td><td>1.48</td></tr>
+          <tr><td>2</td><td>Charlie</td><td>1.88</td><td>1.48</td></tr>
+          <tr><td>3</td><td>Delta</td><td>2.48</td><td>1.48</td></tr>
+          <tr><td>4</td><td>Echo</td><td>3.08</td><td>1.48</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>조준 우선순위 (AimController)</h3>
+    <p>사용자가 타겟을 지정하지 않으면 각 멤버의 <strong>aimPriority</strong> 배열 순서대로 활성·미파괴 부위를 자동 선택합니다.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>멤버</th><th>기본 조준 우선순위</th></tr></thead>
+        <tbody>
+          <tr><td>Alpha</td><td>CORE → HEAD → CHEST</td></tr>
+          <tr><td>Bravo</td><td>HEAD → CHEST → ARM_L → ARM_R → LEG_L → LEG_R</td></tr>
+          <tr><td>Charlie</td><td>HEAD → CHEST → ARM_L → ARM_R</td></tr>
+          <tr><td>Delta</td><td>CHEST → HEAD → CORE</td></tr>
+          <tr><td>Echo</td><td>CORE → HEAD → ARM_L → ARM_R</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 4. 보스 -->
+  <section class="section" id="s4">
+    <div class="section-header"><div class="section-num">4</div><h2>보스</h2></div>
+
+    <h3>보스 기본 스탯</h3>
+    <div class="pill-row">
+      <span class="pill">최대 HP <strong>4,500</strong></span>
+      <span class="pill">이동 속도 <strong>0.26</strong></span>
+      <span class="pill pill-warn">분노 속도 <strong>0.44</strong></span>
+      <span class="pill">방벽 공격 데미지 <strong>80</strong> / 2.5s</span>
+      <span class="pill pill-danger">충격파 (분노 시) <strong>30 dmg</strong> / 6s</span>
+      <span class="pill pill-warn">분노 발동 조건 <strong>HP ≤50% + HEAD·CHEST 파괴</strong></span>
+    </div>
+
+    <h3>부위 (Parts)</h3>
+    <div class="part-grid">
+      <div class="part-card" style="border-top: 2px solid #ffd54f">
+        <div class="part-name" style="color:#ffd54f">HEAD</div>
+        <div class="part-hp" style="color:#ffd54f">600</div>
+        <div class="part-mult">데미지 배율 ×1.5</div>
+        <div class="part-effect">파괴 → 분노 조건 충족 시작</div>
+      </div>
+      <div class="part-card" style="border-top: 2px solid #ff5030">
+        <div class="part-name" style="color:#ff5030">CHEST</div>
+        <div class="part-hp" style="color:#ff5030">1,200</div>
+        <div class="part-mult">데미지 배율 ×1.0</div>
+        <div class="part-effect">파괴 → CORE 활성화<br>디버프 시 스턴 확률</div>
+      </div>
+      <div class="part-card" style="border-top: 2px solid #4a9eff">
+        <div class="part-name" style="color:#4a9eff">ARM_L</div>
+        <div class="part-hp" style="color:#4a9eff">400</div>
+        <div class="part-mult">데미지 배율 ×0.8</div>
+        <div class="part-effect">파괴 → 공격 간격 ×1.6</div>
+      </div>
+      <div class="part-card" style="border-top: 2px solid #4a9eff">
+        <div class="part-name" style="color:#4a9eff">ARM_R</div>
+        <div class="part-hp" style="color:#4a9eff">400</div>
+        <div class="part-mult">데미지 배율 ×0.8</div>
+        <div class="part-effect">파괴 → 공격 간격 ×1.6 (중첩)</div>
+      </div>
+      <div class="part-card" style="border-top: 2px solid #3ec96a">
+        <div class="part-name" style="color:#3ec96a">LEG_L</div>
+        <div class="part-hp" style="color:#3ec96a">350</div>
+        <div class="part-mult">데미지 배율 ×0.7</div>
+        <div class="part-effect">파괴 → 이동속도 ×0.65</div>
+      </div>
+      <div class="part-card" style="border-top: 2px solid #3ec96a">
+        <div class="part-name" style="color:#3ec96a">LEG_R</div>
+        <div class="part-hp" style="color:#3ec96a">350</div>
+        <div class="part-mult">데미지 배율 ×0.7</div>
+        <div class="part-effect">파괴 → 이동속도 ×0.65 (중첩)</div>
+      </div>
+      <div class="part-card" style="border-top: 2px solid #c84aff; opacity: .7">
+        <div class="part-name" style="color:#c84aff">CORE</div>
+        <div class="part-hp" style="color:#c84aff">800</div>
+        <div class="part-mult">데미지 배율 ×2.0</div>
+        <div class="part-effect">초기 비활성화<br>CHEST 파괴 시 등장</div>
+      </div>
+    </div>
+
+    <h3>데미지 계산식</h3>
+    <div class="flow">
+      <code style="color:#e8eaf0; font-size:13px; line-height:2">
+        finalDmg = rawDmg × (1 + destroyedPartCount × 0.25)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; × (HEAD/CORE 디버프 시 1.15 또는 1.30)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; × (부위 특수 배율)<br>
+        <span style="color:#8892a8">// destroyedPartCount = CORE 제외 파괴된 부위 수</span>
+      </code>
+    </div>
+
+    <h3>디버프 시스템</h3>
+    <p>부위를 타격하면 5초 지속 디버프가 적용됩니다. 이미 파괴된 부위를 타격하면 강화 디버프(DebuffStrong).</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>대상 부위</th><th>디버프 효과</th><th>강화 시</th></tr></thead>
+        <tbody>
+          <tr><td>HEAD / CORE</td><td>받는 피해 +15%</td><td>+30%</td></tr>
+          <tr><td>LEG_L / LEG_R</td><td>이동속도 ×0.95</td><td>×0.90</td></tr>
+          <tr><td>ARM_L / ARM_R</td><td>공격간격 ×1.20</td><td>×1.40</td></tr>
+          <tr><td>CHEST</td><td>스턴 확률 8%</td><td>20% (스턴 1.5s)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>보스 상태 머신</h3>
+    <div class="pill-row">
+      <span class="pill">Walking</span>
+      <span class="flow-arrow">→</span>
+      <span class="pill">Attacking</span>
+      <span class="flow-arrow">→</span>
+      <span class="pill pill-warn">Enraged</span>
+      <span class="flow-arrow">→</span>
+      <span class="pill pill-danger">Dying</span>
+      <span class="pill" style="margin-left:12px">Stunned</span>
+    </div>
+  </section>
+
+  <!-- 5. 미니언 -->
+  <section class="section" id="s5">
+    <div class="section-header"><div class="section-num">5</div><h2>미니언 (Minions)</h2></div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>종류</th><th>HP</th><th>속도</th><th>데미지</th>
+            <th>공격범위</th><th>공격주기</th><th>지형피해</th><th>색상</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Runner</strong></td>
+            <td>60</td><td>1.2</td><td>20</td>
+            <td>0.4</td><td>1.5s</td><td>15</td>
+            <td><span class="chip" style="background:#b0986a"></span>황갈색</td>
+          </tr>
+          <tr>
+            <td><strong>Berserker</strong></td>
+            <td>120</td><td>0.8</td><td>35</td>
+            <td>0.5</td><td>1.2s</td><td>20</td>
+            <td><span class="chip" style="background:#b03325"></span>암적색</td>
+          </tr>
+          <tr>
+            <td><strong>Spitter</strong></td>
+            <td>80</td><td>1.0</td><td>25</td>
+            <td>4.0</td><td>2.5s</td><td>10</td>
+            <td><span class="chip" style="background:#33998c"></span>청록색</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>스폰 영역</h3>
+    <div class="pill-row">
+      <span class="pill">X: 11.6 ~ 12.6</span>
+      <span class="pill">Y: 2.2 ~ 2.8</span>
+    </div>
+
+    <h3>웨이브 스케줄 (WaveSystem)</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Phase</th><th>시간대</th><th>스폰 내용</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>0 ~ 10s</td><td>Runner 주기 스폰</td></tr>
+          <tr><td>2</td><td>10 ~ 20s</td><td>Runner + Berserker 추가</td></tr>
+          <tr><td>3</td><td>20 ~ 30s</td><td>Berserker + Spitter 추가</td></tr>
+          <tr><td>4</td><td>30 ~ 45s</td><td>전 종류 혼합, 밀도 증가</td></tr>
+          <tr><td>5</td><td>45 ~ 60s</td><td>고밀도 혼합</td></tr>
+          <tr><td>6</td><td>60s ~</td><td>최대 밀도</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 6. 지형 -->
+  <section class="section" id="s6">
+    <div class="section-header"><div class="section-num">6</div><h2>지형 & 방어선</h2></div>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-accent" style="background:#8888aa"></div>
+        <div class="card-name">방벽 (Wall)</div>
+        <div class="card-stat">
+          위치 <span>X=7.0, Y=2.02</span><br>
+          초기 HP <span>5,000</span><br>
+          파괴 시 <span>OnWallDestroyed 이벤트<br>보스 진격 재개</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-accent" style="background:#c8a432"></div>
+        <div class="card-name">바리케이드 (×3)</div>
+        <div class="card-stat">
+          위치 <span>X=3.8 / 5.0 / 6.2</span><br>
+          역할 <span>보스 진격 방해<br>(SmashBlock 공격 대상)</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-accent" style="background:#7a6450"></div>
+        <div class="card-name">로드블록 (×3)</div>
+        <div class="card-stat">
+          위치 <span>X=8.5 / 10.0 / 11.5</span><br>
+          역할 <span>미니언 이동 방해<br>보스 우선 제거 대상</span>
+        </div>
+      </div>
+    </div>
+
+    <h3>방어선 (Defense Line)</h3>
+    <div class="callout">
+      X = 1.3 — 보스가 이 선을 넘으면 <strong>즉시 패배</strong>. 분대원은 이 선 앞(X≥0.68)에 배치.
+    </div>
+  </section>
+
+  <!-- 7. 입력 & 조작 -->
+  <section class="section" id="s7">
+    <div class="section-header"><div class="section-num">7</div><h2>입력 & 조작</h2></div>
+
+    <p>Mouse / Touch 입력을 지원합니다. New Input System과 Legacy Input System 모두 대응.</p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>조작</th><th>행동</th></tr></thead>
+        <tbody>
+          <tr><td>분대원 클릭</td><td>선택 / 재클릭 시 선택 해제. 선택된 멤버 하이라이트</td></tr>
+          <tr><td>선택 후 드래그</td><td>조준 방향 지정 (DragTarget). 보스 부위 / 미니언 위에서 떼면 타겟 고정</td></tr>
+          <tr><td>빈 영역 클릭</td><td>드래그 시작 (비선택 상태)</td></tr>
+          <tr><td>BOMB 버튼 클릭</td><td>폭격 활성화 (쿨타임 완료 시만 활성)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>선택 하이라이트</h3>
+    <p>선택된 분대원의 bodyRenderer 색상이 <code>Lerp(기본색, 흰색, 0.45)</code>로 밝아집니다.</p>
+  </section>
+
+  <!-- 8. 시스템 -->
+  <section class="section" id="s8">
+    <div class="section-header"><div class="section-num">8</div><h2>시스템</h2></div>
+
+    <h3>BombingSystem (폭격)</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>항목</th><th>값</th></tr></thead>
+        <tbody>
+          <tr><td>데미지</td><td>300 (반경 내 모든 대상)</td></tr>
+          <tr><td>반경</td><td>1.5 월드 유닛</td></tr>
+          <tr><td>쿨타임</td><td>20초</td></tr>
+          <tr><td>준비 표시</td><td>방사형 Radial360 오버레이 채움 + "READY" 텍스트</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>FireSystem (발사)</h3>
+    <p>ObjectPool로 Bullet 재사용. BossPartController와 충돌 시 BossController.TakeDamage() 호출.</p>
+
+    <h3>EnrageSystem (분노)</h3>
+    <p>매 프레임 BossController.MeetsEnrageCondition() 확인 → 조건 충족 시 Boss.Enrage() 1회 호출.</p>
+
+    <h3>GameEvents (이벤트 버스)</h3>
+    <p>Static C# 이벤트 기반. MonoBehaviour 간 직접 참조 없이 통신.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>이벤트</th><th>인수</th><th>발행자</th></tr></thead>
+        <tbody>
+          <tr><td>OnBossHpChanged</td><td>hp, maxHp</td><td>BossController</td></tr>
+          <tr><td>OnBossPartDestroyed</td><td>partId</td><td>BossPartController</td></tr>
+          <tr><td>OnBossEnraged</td><td>—</td><td>BossController</td></tr>
+          <tr><td>OnBossShockwave</td><td>pos, dmg</td><td>BossController</td></tr>
+          <tr><td>OnBossAttack</td><td>—</td><td>BossController</td></tr>
+          <tr><td>OnBossDefeated</td><td>—</td><td>BossController</td></tr>
+          <tr><td>OnWallHpChanged</td><td>hp, max</td><td>TerrainManager</td></tr>
+          <tr><td>OnWallDestroyed</td><td>—</td><td>TerrainManager</td></tr>
+          <tr><td>OnAmmoChanged</td><td>id, cur, max</td><td>SquadMemberController</td></tr>
+          <tr><td>OnReloadStarted/Progress/Complete</td><td>id (+ prog)</td><td>SquadMemberController</td></tr>
+          <tr><td>OnMemberDied</td><td>id</td><td>SquadMemberController</td></tr>
+          <tr><td>OnSpawnMinion</td><td>type, pos</td><td>WaveSystem</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 9. 로그라이크 -->
+  <section class="section" id="s9">
+    <div class="section-header"><div class="section-num">9</div><h2>로그라이크 루프 (예정)</h2></div>
+
+    <div class="callout" style="border-color:#4a9eff; background:rgba(74,158,255,.06)">
+      현재 기획 완료 / 구현 미착수. 아래 내용은 설계 스펙입니다.
+    </div>
+
+    <h3>스테이지 클리어 흐름</h3>
+    <div class="flow">
+      <div class="flow-row">
+        <div class="flow-box" style="border-color:#3ec96a;color:#3ec96a">보스 처치</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">일시정지<br><small>Time.timeScale=0</small></div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">강화 카드 선택<br><small>3장 중 1장</small></div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">배치 변경 UI</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">스테이지 리셋</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box" style="border-color:#ff7c20;color:#ff7c20">다음 스테이지</div>
+      </div>
+    </div>
+
+    <h3>강화 카드 시스템 (UpgradeCardSO)</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>카드 예시</th><th>대상</th><th>효과</th><th>최대 중첩</th></tr></thead>
+        <tbody>
+          <tr><td>Alpha 집중 훈련</td><td>멤버: alpha</td><td>데미지 ×1.2</td><td>5</td></tr>
+          <tr><td>샷건 탄약 개선</td><td>무기타입: Shotgun</td><td>탄창 +2</td><td>5</td></tr>
+          <tr><td>불꽃 속성 강화</td><td>속성: Fire</td><td>데미지 ×1.15</td><td>5</td></tr>
+          <tr><td>폭격 보급</td><td>전체</td><td>폭탄 충전 +1</td><td>3</td></tr>
+          <tr><td>바리케이드 증설</td><td>전체</td><td>바리케이드 +1</td><td>3</td></tr>
+          <tr><td>빠른 손</td><td>무기타입: Sniper</td><td>장전속도 ×0.8</td><td>5</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>보스 난이도 스케일링</h3>
+    <div class="flow">
+      <code style="color:#e8eaf0; font-size:13px; line-height:2">
+        BossDifficultyMult = 1.2^stage<br>
+        runtimeMaxHp  = config.maxHp × mult<br>
+        runtimeSpeed  = config.speed × 1.05^stage<br>
+        runtimeDamage = config.attackDamageWall × 1.1^stage
+      </code>
+    </div>
+
+    <h3>지원 무기 (예정)</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>타입</th><th>패시브 오라</th><th>액티브 (쿨타임)</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Healer</strong></td>
+            <td>반경 2.0 내 아군 HP +3/s</td>
+            <td>최저HP 아군에게 치유탄 발사 +40 HP (8s)</td>
+          </tr>
+          <tr>
+            <td><strong>Buffer</strong></td>
+            <td>반경 2.5 내 아군 데미지 ×1.15, 발사속도 ×0.9</td>
+            <td>최근접 아군 데미지 ×1.40 / 5s (10s)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 10. UI -->
+  <section class="section" id="s10">
+    <div class="section-header"><div class="section-num">10</div><h2>UI 레이아웃</h2></div>
+
+    <p>Canvas: ScreenSpaceOverlay, 기준 해상도 1920×1080, ScaleWithScreenSize.</p>
+
+    <h3>게임 씬 레이아웃</h3>
+    <div style="background:#0e1220; border:1px solid #2a3050; border-radius:10px; padding:20px; font-family:monospace; font-size:13px; line-height:1.9; color:#8892a8">
+      <span style="color:#ffd54f">┌───────────────────────────────────────────────┐</span><br>
+      <span style="color:#ffd54f">│</span> <span style="color:#ff7c20">[BOSS HP ████████████████░░░  4200/4500]</span> <span style="color:#c8a432">[WAVE 2]</span> <span style="color:#ffd54f">│</span><br>
+      <span style="color:#ffd54f">│</span> <span style="color:#4a9eff">[HEAD][ARM_L][ARM_R][LEG_L][LEG_R][CHEST][CORE]</span>        <span style="color:#ffd54f">│</span><br>
+      <span style="color:#ffd54f">│</span> <span style="color:#8892a8">[WALL ██████░░  3500]</span>                                    <span style="color:#ffd54f">│</span><br>
+      <span style="color:#ffd54f">│</span>                                                       <span style="color:#ffd54f">│</span><br>
+      <span style="color:#ffd54f">│</span>                  &nbsp;<span style="color:#4a8040">▓▓▓</span> &nbsp;&nbsp;&nbsp;<span style="color:#808080">────</span>  &nbsp;&nbsp;<span style="color:#804040">██████</span>              <span style="color:#ffd54f">│</span><br>
+      <span style="color:#ffd54f">│</span>                     게임 월드                           <span style="color:#ffd54f">│</span><br>
+      <span style="color:#ffd54f">│</span> <span style="color:#4a9eff">■</span><span style="color:#ff8030">■</span><span style="color:#3ec96a">■</span><span style="color:#c84aff">■</span><span style="color:#20e8e8">■</span>                                                  <span style="color:#ffd54f">│</span><br>
+      <span style="color:#ffd54f">│</span> <span style="color:#4a9eff">[ALPHA  ]</span><span style="color:#ff8030">[BRAVO  ]</span><span style="color:#3ec96a">[CHARLIE]</span><span style="color:#c84aff">[DELTA  ]</span><span style="color:#20e8e8">[ECHO   ]</span> <span style="color:#ff7c20">[💣BOMB]</span> <span style="color:#ffd54f">│</span><br>
+      <span style="color:#ffd54f">│</span> <span style="color:#4a9eff">HP ████  </span><span style="color:#ff8030">HP ████  </span><span style="color:#3ec96a">HP ████  </span><span style="color:#c84aff">HP ████  </span><span style="color:#20e8e8">HP ████  </span> <span style="color:#8892a8">[ 14s ]</span>  <span style="color:#ffd54f">│</span><br>
+      <span style="color:#ffd54f">│</span> <span style="color:#8892a8">SNIPER 6/6 AR 40/40  SHOT 4/4  RPG 3/3  DMR 2/2</span>        <span style="color:#ffd54f">│</span><br>
+      <span style="color:#ffd54f">└───────────────────────────────────────────────┘</span>
+    </div>
+
+    <h3>UI 컴포넌트 목록</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>컴포넌트</th><th>위치</th><th>역할</th></tr></thead>
+        <tbody>
+          <tr><td>BossHpBarUI</td><td>상단 전체</td><td>보스 HP 슬라이더 + 부위 아이콘 7개</td></tr>
+          <tr><td>WallHpBarUI</td><td>상단 좌측 하단</td><td>방벽 HP 슬라이더</td></tr>
+          <tr><td>WaveInfoUI</td><td>상단 우측</td><td>웨이브 번호 / 분노 상태 표시</td></tr>
+          <tr><td>SquadHpBarUI (×5)</td><td>하단 패널 각 열</td><td>HP 슬라이더 + 장전 슬라이더</td></tr>
+          <tr><td>AmmoDisplayUI (×5)</td><td>하단 패널 각 열</td><td>현재/최대 탄약 표시</td></tr>
+          <tr><td>BombButtonUI</td><td>하단 우측</td><td>폭격 버튼 + 방사형 쿨타임 오버레이</td></tr>
+          <tr><td>ResultUI</td><td>결과 씬</td><td>MISSION COMPLETE/FAILED + RETRY/MENU</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 11. 기술 -->
+  <section class="section" id="s11">
+    <div class="section-header"><div class="section-num">11</div><h2>기술 스택</h2></div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>영역</th><th>기술</th></tr></thead>
+        <tbody>
+          <tr><td>엔진</td><td>Unity 2022.3 LTS</td></tr>
+          <tr><td>언어</td><td>C# 9.0</td></tr>
+          <tr><td>렌더링</td><td>2D URP / Legacy (SpriteRenderer)</td></tr>
+          <tr><td>UI</td><td>Unity UGUI (Canvas, Slider, Button, Text)</td></tr>
+          <tr><td>입력</td><td>New Input System (+ Legacy 폴백)</td></tr>
+          <tr><td>데이터</td><td>ScriptableObject (BossConfigSO, SquadMemberConfigSO, MinionConfigSO)</td></tr>
+          <tr><td>이벤트</td><td>Static C# event (GameEvents 버스)</td></tr>
+          <tr><td>물리</td><td>Physics2D (Trigger, OverlapPoint, OverlapCircleAll)</td></tr>
+          <tr><td>씬 빌드</td><td>Editor Script — SceneBuilder (SquadVsMonster 메뉴)</td></tr>
+          <tr><td>씬 구성</td><td>Game.unity, Result.unity</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>씬 빌드 방법</h3>
+    <div class="callout">
+      Unity 메뉴 → <strong>SquadVsMonster → Build All Scenes</strong><br>
+      Game.unity + Result.unity 를 자동 생성하고 Build Settings에 등록합니다.
+    </div>
+  </section>
+
+</div>
+
+<footer class="wrapper">
+  SquadVsMonster Game Design Document &nbsp;·&nbsp; v0.3 &nbsp;·&nbsp; 2026-04-23<br>
+  <span style="color:#444">Generated from codebase analysis</span>
+</footer>
+
+</body>
+</html>

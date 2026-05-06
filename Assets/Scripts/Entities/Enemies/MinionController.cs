@@ -9,8 +9,9 @@ public class MinionController : MonoBehaviour {
     private float _attackTimer;
     private TerrainManager _terrain;
     private SquadMemberController[] _squad;
-    // _spitterTarget: direct reference avoids fragile position-match in AttackTarget
     private SquadMemberController _spitterTarget;
+    private HitFlash  _hitFlash;
+    private Color     _bodyColor;
 
     void Start() {
         if (config == null) {
@@ -18,9 +19,12 @@ public class MinionController : MonoBehaviour {
             enabled = false;
             return;
         }
-        _hp      = config.hp;
-        _terrain = FindObjectOfType<TerrainManager>();
-        _squad   = FindObjectsOfType<SquadMemberController>();
+        _hp        = config.hp;
+        _terrain   = FindObjectOfType<TerrainManager>();
+        _squad     = FindObjectsOfType<SquadMemberController>();
+        _hitFlash  = GetComponent<HitFlash>();
+        var sr     = GetComponent<SpriteRenderer>();
+        _bodyColor = sr != null ? sr.color : Color.white;
     }
 
     void OnEnable()  => GameEvents.OnMemberDied += RefreshSquad;
@@ -81,12 +85,16 @@ public class MinionController : MonoBehaviour {
 
     public void TakeDamage(float amount) {
         if (!IsAlive) return;
+        DamageNumberSystem.Instance?.Show(amount, false,
+            transform.position + Vector3.up * 0.5f);
+        _hitFlash?.Flash();
         _hp -= amount;
         if (_hp <= 0f) Die();
     }
 
     private void Die() {
         IsAlive = false;
+        VFXSystem.Instance?.ShowMinionDeath(transform.position, _bodyColor);
         Destroy(gameObject);
     }
 }

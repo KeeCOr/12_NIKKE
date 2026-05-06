@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class UIManager : MonoBehaviour {
     [SerializeField] private BossHpBarUI bossHpBar;
-    [SerializeField] private SquadHpBarUI[] squadHpBars;   // 5
-    [SerializeField] private AmmoDisplayUI[] ammoDisplays; // 5
+    [SerializeField] private SquadHpBarUI[] squadHpBars;
+    [SerializeField] private AmmoDisplayUI[] ammoDisplays;
     [SerializeField] private SquadMemberConfigSO[] squadConfigs;
 
     private System.Action<string, int, int>[] _ammoHandlers;
@@ -45,8 +45,6 @@ public class UIManager : MonoBehaviour {
             GameEvents.OnReloadComplete += _reloadCompleteHandlers[idx];
             GameEvents.OnMemberDied     += _memberDiedHandlers[idx];
         }
-
-        GameEvents.OnWallHpChanged += OnWallHpChanged;
     }
 
     void OnDisable() {
@@ -57,16 +55,12 @@ public class UIManager : MonoBehaviour {
 
         if (_ammoHandlers != null) {
             for (int i = 0; i < _ammoHandlers.Length; i++) {
-                if (_ammoHandlers[i] != null)           GameEvents.OnAmmoChanged    -= _ammoHandlers[i];
-                if (_reloadStartHandlers[i] != null)    GameEvents.OnReloadStarted  -= _reloadStartHandlers[i];
+                if (_ammoHandlers[i]           != null) GameEvents.OnAmmoChanged    -= _ammoHandlers[i];
+                if (_reloadStartHandlers[i]    != null) GameEvents.OnReloadStarted  -= _reloadStartHandlers[i];
                 if (_reloadProgressHandlers[i] != null) GameEvents.OnReloadProgress -= _reloadProgressHandlers[i];
                 if (_reloadCompleteHandlers[i] != null) GameEvents.OnReloadComplete -= _reloadCompleteHandlers[i];
-                if (_memberDiedHandlers[i] != null)     GameEvents.OnMemberDied     -= _memberDiedHandlers[i];
+                if (_memberDiedHandlers[i]     != null) GameEvents.OnMemberDied     -= _memberDiedHandlers[i];
             }
         }
-
-        GameEvents.OnWallHpChanged -= OnWallHpChanged;
     }
-
-    private void OnWallHpChanged(float hp, float max) { }
 }

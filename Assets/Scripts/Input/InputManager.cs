@@ -15,9 +15,8 @@ public class InputManager : MonoBehaviour {
     private InputAction _pointerPosition;
     private InputAction _primaryPress;
 #endif
-    private int    _selectedMember  = -1;
+    private int    _selectedMember = -1;
     private bool   _isDragging;
-    private Vector2 _dragStartScreen;
 
     void Awake() {
         if (Instance != null) { Destroy(gameObject); return; }
@@ -59,11 +58,11 @@ public class InputManager : MonoBehaviour {
         if (pressed && !_isDragging) {
             int hit = GetSquadMemberAt(worldPos);
             if (hit >= 0) {
-                _selectedMember = (_selectedMember == hit) ? -1 : hit;
+                int next = (_selectedMember == hit) ? -1 : hit;
+                SetSelection(next);
                 return;
             }
-            _isDragging      = true;
-            _dragStartScreen = screenPos;
+            _isDragging = true;
         }
 
         if (_isDragging && pressed && _selectedMember >= 0 && _selectedMember < aimControllers.Length) {
@@ -82,6 +81,20 @@ public class InputManager : MonoBehaviour {
             if (_selectedMember >= 0 && _selectedMember < aimControllers.Length)
                 aimControllers[_selectedMember].DragTarget = null;
         }
+    }
+
+    private void SetSelection(int next) {
+        // Deselect previous
+        if (_selectedMember >= 0 && _selectedMember < squadMembers.Length
+            && squadMembers[_selectedMember] != null)
+            squadMembers[_selectedMember].SetSelected(false);
+
+        _selectedMember = next;
+
+        // Highlight new selection
+        if (_selectedMember >= 0 && _selectedMember < squadMembers.Length
+            && squadMembers[_selectedMember] != null)
+            squadMembers[_selectedMember].SetSelected(true);
     }
 
     private int GetSquadMemberAt(Vector2 worldPos) {

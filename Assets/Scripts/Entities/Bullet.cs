@@ -15,6 +15,9 @@ public class Bullet : MonoBehaviour {
 
     private static readonly Collider2D[] _splashBuffer = new Collider2D[32];
 
+    private TrailRenderer _trail;
+    void Awake() { _trail = GetComponent<TrailRenderer>(); }
+
     public void Initialize(BulletData data, BossController boss) {
         _speed        = data.speed;
         _damage       = data.damage;
@@ -25,6 +28,7 @@ public class Bullet : MonoBehaviour {
         _lifetime     = 0f;
         transform.position = data.origin;
         transform.rotation = Quaternion.Euler(0f, 0f, data.angle * Mathf.Rad2Deg);
+        _trail?.Clear();   // prevent ghost trail from previous pool lifetime
     }
 
     void Update() {
@@ -36,13 +40,14 @@ public class Bullet : MonoBehaviour {
     void OnTriggerEnter2D(Collider2D other) {
         var part = other.GetComponent<BossPartController>();
         if (part != null && _boss != null) {
-            _boss.TakeDamage(part.PartId, _damage);
+            _boss.TakeDamage(part.PartId, _damage, transform.position);
             if (_bulletType == BulletType.Rocket && _splashRadius > 0f) {
+                VFXSystem.Instance?.ShowExplosion(transform.position);
                 int count = Physics2D.OverlapCircleNonAlloc(transform.position, _splashRadius, _splashBuffer);
                 for (int i = 0; i < count; i++) {
                     var p = _splashBuffer[i].GetComponent<BossPartController>();
                     if (p != null && p.PartId != part.PartId)
-                        _boss.TakeDamage(p.PartId, _damage * 0.5f);
+                        _boss.TakeDamage(p.PartId, _damage * 0.5f, transform.position);
                 }
             }
             ReturnToPool();
@@ -53,6 +58,7 @@ public class Bullet : MonoBehaviour {
         if (minion != null) {
             minion.TakeDamage(_damage);
             if (_bulletType == BulletType.Rocket && _splashRadius > 0f) {
+                VFXSystem.Instance?.ShowExplosion(transform.position);
                 int count = Physics2D.OverlapCircleNonAlloc(transform.position, _splashRadius, _splashBuffer);
                 for (int i = 0; i < count; i++) {
                     var m = _splashBuffer[i].GetComponent<MinionController>();

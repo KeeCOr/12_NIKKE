@@ -1,13 +1,26 @@
 using UnityEngine;
 
 public class BombingSystem : MonoBehaviour {
+    public static BombingSystem Instance { get; private set; }
+
     [SerializeField] private float damage   = 300f;
     [SerializeField] private float radius   = 1.5f;
     [SerializeField] private float cooldown = 20f;
     [SerializeField] private BossController boss;
 
     private float _timer;
-    public bool IsReady => _timer <= 0f;
+
+    public bool  IsReady       => _timer <= 0f;
+    public float CooldownRatio => cooldown > 0f ? Mathf.Clamp01(_timer / cooldown) : 0f;
+    public float RemainingTime => _timer;
+
+    void Awake() {
+        Instance = this;
+    }
+
+    void OnDestroy() {
+        if (Instance == this) Instance = null;
+    }
 
     void Update() {
         if (_timer > 0f) _timer -= Time.deltaTime;

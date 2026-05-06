@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 003b8965b58091c49a40ac764cc25fa5, type: 3}
+  m_Name: SquadConfig_Echo
+  m_EditorClassIdentifier: 
+  id: echo
+  label: Echo
+  hp: 80
+  color: {r: 0.1, g: 0.85, b: 0.85, a: 1}
+  weapon:
+    name: Railgun
+    magazineSize: 2
+    damage: 280
+    fireRate: 4
+    reloadTime: 3
+    bulletSpeed: 3000
+    bulletType: 0
+    pellets: 1
+    spread: 0
+    splashRadius: 0
+  special: 5
+  specialVal: 1.4
+  aimPriority:
+  - CORE
+  - HEAD
+  - ARM_L
+  - ARM_R

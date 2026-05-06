@@ -4,18 +4,19 @@ public class SquadMemberController : MonoBehaviour {
     [SerializeField] public SquadMemberConfigSO config;
     [SerializeField] private SpriteRenderer bodyRenderer;
 
-    public string Id        => config.id;
-    public bool   IsAlive   { get; private set; } = true;
-    public float  Hp        { get; private set; }
-    public float  MaxHp     { get; private set; }
+    public string Id          => config.id;
+    public bool   IsAlive     { get; private set; } = true;
+    public float  Hp          { get; private set; }
+    public float  MaxHp       { get; private set; }
     public bool   IsReloading { get; private set; }
     public int    CurrentAmmo { get; private set; }
+
+    public bool IsEchoMarkActive { get; set; }
 
     private float  _fireTimer;
     private float  _reloadTimer;
     private AimController _aim;
-
-    public bool IsEchoMarkActive { get; set; }
+    private Color  _defaultColor;
 
     void Awake() {
         if (config == null) {
@@ -27,6 +28,7 @@ public class SquadMemberController : MonoBehaviour {
         Hp          = MaxHp;
         CurrentAmmo = config.weapon.magazineSize;
         _aim        = GetComponent<AimController>();
+        _defaultColor = bodyRenderer != null ? bodyRenderer.color : Color.white;
     }
 
     void OnEnable()  => GameEvents.OnBossShockwave += HandleShockwave;
@@ -50,25 +52,58 @@ public class SquadMemberController : MonoBehaviour {
 
     private void TryFire() {
         if (_aim == null || !_aim.HasTarget) return;
-        Vector2 aimPos = _aim.AimPosition;
-        Vector2 muzzle = (Vector2)transform.position + new Vector2(0.22f, 0.58f);
-        float angle    = Mathf.Atan2(aimPos.y - muzzle.y, aimPos.x - muzzle.x);
 
-        float dmg = config.weapon.damage;
-        if (config.special == SpecialType.WeakpointBonus && _aim.TargetPartId == "CORE")
-            dmg *= config.specialVal;
+        Vector2 aimPos = _aim.AimPosition;
+        Bounds _b = (bodyRenderer != null && bodyRenderer.sprite != null)
+            ? bodyRenderer.bounds
+            : new Bounds(transform.position, new Vector3(0.5f, 1.0f, 0.1f));
+        Vector2 muzzle = new Vector2(
+            _b.center.x + _b.extents.x * 0.85f,
+            _b.center.y + _b.extents.y * 0.30f);
+        float   angle  = Mathf.Atan2(aimPos.y - muzzle.y, aimPos.x - muzzle.x);
+
+        float dmg            = config.weapon.damage;
+        float effectiveSpread = config.weapon.spread;
+        float effectiveSplash = config.weapon.splashRadius * 0.01f;
+
+        switch (config.special) {
+            case SpecialType.WeakpointBonus:
+                // Charlie SNIPER: bonus on CORE
+                if (_aim.TargetPartId == "CORE")
+                    dmg *= config.specialVal;
+                break;
+
+            case SpecialType.WeakpointMark:
+                // Echo DMR: always deals specialVal× damage to any targeted part
+                if (!string.IsNullOrEmpty(_aim.TargetPartId))
+                    dmg *= config.specialVal;
+                break;
+
+            case SpecialType.BurstAccuracy:
+                // Bravo AR: tighter spread
+                if (effectiveSpread > 0f)
+                    effectiveSpread /= config.specialVal;
+                break;
+
+            case SpecialType.RocketSplash:
+                // Delta ROCKET: larger splash radius
+                effectiveSplash *= config.specialVal;
+                break;
+        }
+
+        // Echo mark bonus (applied by external system)
         if (IsEchoMarkActive) dmg *= 1.2f;
 
         GameEvents.RaiseFireBullet(new BulletData {
             origin       = muzzle,
             angle        = angle,
-            speed        = config.weapon.bulletSpeed * 0.01f, // px→units
+            speed        = config.weapon.bulletSpeed * 0.01f,
             damage       = dmg,
             ownerId      = Id,
             bulletType   = config.weapon.bulletType,
-            splashRadius = config.weapon.splashRadius * 0.01f,
+            splashRadius = effectiveSplash,
             pellets      = config.weapon.pellets,
-            spread       = config.weapon.spread,
+            spread       = effectiveSpread,
             targetPartId = _aim.TargetPartId
         });
 
@@ -104,7 +139,13 @@ public class SquadMemberController : MonoBehaviour {
     }
 
     private void HandleShockwave(Vector2 pos, float damage) => TakeDamage(damage);
-    // pos unused: shockwave applies full damage to all living members regardless of distance
 
     public float GetHpRatio() => MaxHp > 0f ? Hp / MaxHp : 0f;
+
+    public void SetSelected(bool selected) {
+        if (bodyRenderer == null) return;
+        bodyRenderer.color = selected
+            ? Color.Lerp(_defaultColor, Color.white, 0.45f)
+            : _defaultColor;
+    }
 }

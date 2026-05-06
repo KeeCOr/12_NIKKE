@@ -1,31 +1,57 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+// VFXSystem and DamageNumberSystem referenced by name (same assembly)
 
 public class BossController : MonoBehaviour {
     public enum BossState { Walking, Attacking, Stunned, Enraged, Dying }
 
     [SerializeField] private BossConfigSO config;
     [SerializeField] private SpriteRenderer bodyRenderer;
-    [SerializeField] private SpriteRenderer[] partRenderers; // Inspector 파트 순서 매핑
+    [SerializeField] private SpriteRenderer[] partRenderers;
 
-    public BossState State    { get; private set; } = BossState.Walking;
-    public bool      IsAlive  { get; private set; } = true;
+    public BossState State     { get; private set; } = BossState.Walking;
+    public bool      IsAlive   { get; private set; } = true;
     public bool      IsEnraged { get; private set; }
-    public float     Hp       { get; private set; }
-    public float     MaxHp    { get; private set; }
+    public float     Hp        { get; private set; }
+    public float     MaxHp     { get; private set; }
 
     private readonly Dictionary<string, BossPartController> _parts = new();
     private float _attackTimer;
     private float _shockwaveTimer;
     private float _stunTimer;
     private float _stunCooldown;
+    private bool  _wallDestroyed;
     private TerrainManager _terrain;
-    private CameraShaker _cameraShaker;
+    private CameraShaker   _cameraShaker;
 
     private static readonly string[] _legIds  = { "LEG_L", "LEG_R" };
     private static readonly string[] _armIds  = { "ARM_L", "ARM_R" };
-    private static readonly string[] _vulnIds = { "HEAD", "CORE" };
+    private static readonly string[] _vulnIds = { "HEAD",  "CORE"  };
+
+    // ── shared white sprite created once at runtime for part renderers ──────
+    private static Sprite _sharedSprite;
+    private static Sprite SharedSprite() {
+        if (_sharedSprite != null) return _sharedSprite;
+        var tex = new Texture2D(4, 4, TextureFormat.RGBA32, false);
+        for (int y = 0; y < 4; y++)
+            for (int x = 0; x < 4; x++)
+                tex.SetPixel(x, y, Color.white);
+        tex.Apply();
+        _sharedSprite = Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f), 4f);
+        return _sharedSprite;
+    }
+
+    private static Color PartBaseColor(string id) => id switch {
+        "HEAD"  => new Color(1.0f, 0.85f, 0.10f, 0.55f),
+        "CHEST" => new Color(1.0f, 0.30f, 0.10f, 0.50f),
+        "ARM_L" => new Color(0.25f, 0.55f, 1.0f, 0.45f),
+        "ARM_R" => new Color(0.25f, 0.55f, 1.0f, 0.45f),
+        "LEG_L" => new Color(0.25f, 0.90f, 0.40f, 0.45f),
+        "LEG_R" => new Color(0.25f, 0.90f, 0.40f, 0.45f),
+        "CORE"  => new Color(1.0f, 0.20f, 0.90f, 0.00f),  // invisible until activated
+        _       => new Color(1f, 1f, 1f, 0.35f),
+    };
 
     void Awake() {
         if (config == null) {
@@ -36,19 +62,27 @@ public class BossController : MonoBehaviour {
 
         MaxHp = config.maxHp;
         Hp    = MaxHp;
-        // Boss HP is tracked separately from part HP sums — config.maxHp must match
-        // the intended total so they stay in sync as parts take damage.
         _attackTimer = config.attackInterval;
         transform.position = new Vector3(GameConfig.BOSS_START_X, GameConfig.BOSS_Y, 0f);
 
+        Sprite sp = SharedSprite();
         foreach (var partCfg in config.parts) {
-            var go  = new GameObject($"Part_{partCfg.id}");
+            var go = new GameObject($"Part_{partCfg.id}");
             go.transform.SetParent(transform);
-            go.transform.localPosition = new Vector3(partCfg.offset.x, partCfg.offset.y, 0f);
-            var col    = go.AddComponent<BoxCollider2D>();
-            col.size   = partCfg.size;
+            go.transform.localPosition = new Vector3(partCfg.offset.x, partCfg.offset.y, -0.1f);
+            // Scale the part so the SpriteRenderer matches the collider area
+            go.transform.localScale    = new Vector3(partCfg.size.x, partCfg.size.y, 1f);
+
+            var col      = go.AddComponent<BoxCollider2D>();
+            col.size     = Vector2.one;
             col.isTrigger = true;
-            var part   = go.AddComponent<BossPartController>();
+
+            var sr          = go.AddComponent<SpriteRenderer>();
+            sr.sprite       = sp;
+            sr.color        = PartBaseColor(partCfg.id);
+            sr.sortingOrder = 6;
+
+            var part = go.AddComponent<BossPartController>();
             part.Initialize(partCfg);
             _parts[partCfg.id] = part;
         }
@@ -61,9 +95,14 @@ public class BossController : MonoBehaviour {
         _cameraShaker = Camera.main != null ? Camera.main.GetComponent<CameraShaker>() : null;
     }
 
+    void OnEnable()  => GameEvents.OnWallDestroyed += HandleWallDestroyed;
+    void OnDisable() => GameEvents.OnWallDestroyed -= HandleWallDestroyed;
+
     void OnDestroy() {
         GameEvents.OnBossPartDestroyed -= OnPartDestroyed;
     }
+
+    private void HandleWallDestroyed() => _wallDestroyed = true;
 
     void Update() {
         if (!IsAlive) return;
@@ -78,14 +117,19 @@ public class BossController : MonoBehaviour {
             var obstacle = _terrain?.GetRoadBlockAhead(transform.position.x);
             if (obstacle.HasValue) {
                 AttackObstacle(dt, obstacle.Value);
-            } else if (transform.position.x > config.stopX) {
+            } else if (!_wallDestroyed && transform.position.x > config.stopX) {
+                // Advance toward wall
                 transform.position += Vector3.left * EffectiveSpeed * dt;
-            } else {
+            } else if (!_wallDestroyed) {
+                // At stopX — keep attacking wall
                 AttackWall(dt);
+            } else {
+                // Wall is destroyed — advance past stopX toward defense line
+                transform.position += Vector3.left * EffectiveSpeed * dt;
             }
         }
 
-        // Defense breach → game over (IsAlive guard prevents double TriggerDefenseBroken)
+        // Defense breach triggers when boss crosses the defense line after wall falls
         if (transform.position.x < GameConfig.DEFENSE_LINE && IsAlive) {
             IsAlive = false;
             GameManager.Instance?.TriggerDefenseBroken();
@@ -96,6 +140,7 @@ public class BossController : MonoBehaviour {
             _shockwaveTimer -= dt;
             if (_shockwaveTimer <= 0f) {
                 _shockwaveTimer = config.shockwaveInterval;
+                VFXSystem.Instance?.ShowShockwave(transform.position);
                 GameEvents.RaiseBossShockwave(transform.position, config.shockwaveDamage);
             }
         }
@@ -143,14 +188,12 @@ public class BossController : MonoBehaviour {
         }
     }
 
-    public float TakeDamage(string partId, float rawDmg) {
+    public float TakeDamage(string partId, float rawDmg, Vector3? hitPos = null) {
         if (!IsAlive) return 0f;
         if (!_parts.TryGetValue(partId, out var part)) return 0f;
         if (!part.IsActive || part.IsDestroyed) return 0f;
 
-        // Apply debuff only on living parts; check IsDestroyed first to avoid writing
-        // stale DebuffTimer onto destroyed parts (which would bleed into EffectiveSpeed).
-        part.ApplyHitDebuff(false);
+        part.ApplyHitDebuff(part.IsDestroyed);
 
         int destroyedCount = 0;
         foreach (var p in _parts.Values)
@@ -176,6 +219,13 @@ public class BossController : MonoBehaviour {
         Hp = Mathf.Max(0f, Hp - dmgApplied);
         GameEvents.RaiseBossHpChanged(Hp, MaxHp);
 
+        bool isCrit = finalDmg >= rawDmg * 1.25f || partId == "CORE";
+        Vector3 numPos = hitPos ?? (part.transform.position + Vector3.up * 0.6f);
+        DamageNumberSystem.Instance?.Show(dmgApplied, isCrit, numPos);
+
+        // Brief white flash on boss body sprite
+        if (bodyRenderer != null) StartCoroutine(BodyHitFlash());
+
         if (Hp <= 0f) Die();
         return dmgApplied;
     }
@@ -185,7 +235,7 @@ public class BossController : MonoBehaviour {
         IsEnraged = true;
         State     = BossState.Enraged;
         _shockwaveTimer = 3f;
-        if (bodyRenderer != null) bodyRenderer.color = new Color(0.48f, 0.1f, 0.04f); // enraged red
+        if (bodyRenderer != null) bodyRenderer.color = new Color(0.48f, 0.10f, 0.04f);
         _cameraShaker?.Shake(0.6f, 0.018f);
         GameEvents.RaiseBossEnraged();
     }
@@ -196,15 +246,13 @@ public class BossController : MonoBehaviour {
     }
 
     private void Die() {
-        // Die() path: boss HP → 0. Contrast with defense breach path which calls
-        // TriggerDefenseBroken() directly without raising OnBossDefeated.
         IsAlive = false;
         State   = BossState.Dying;
         StartCoroutine(DieCoroutine());
     }
 
     private IEnumerator DieCoroutine() {
-        float elapsed = 0f;
+        float elapsed  = 0f;
         const float duration = 1.2f;
         Color startColor = bodyRenderer != null ? bodyRenderer.color : Color.white;
         while (elapsed < duration) {
@@ -218,10 +266,22 @@ public class BossController : MonoBehaviour {
         gameObject.SetActive(false);
     }
 
+    private Color _bodyBaseColor;
+    private bool  _bodyColorCached;
+
+    private IEnumerator BodyHitFlash() {
+        if (!_bodyColorCached) {
+            _bodyBaseColor   = bodyRenderer.color;
+            _bodyColorCached = true;
+        }
+        bodyRenderer.color = Color.white;
+        yield return new WaitForSeconds(0.06f);
+        bodyRenderer.color = _bodyBaseColor;
+    }
+
     public BossPartController GetPart(string id) =>
         _parts.TryGetValue(id, out var p) ? p : null;
 
-    // Returns false (no enrage) if HEAD or CHEST are absent from config — check config if enrage never fires.
     public bool MeetsEnrageCondition() =>
         Hp / MaxHp <= config.enrageHpThreshold
         && _parts.TryGetValue("HEAD",  out var h) && h.IsDestroyed

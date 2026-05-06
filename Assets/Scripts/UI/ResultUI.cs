@@ -3,17 +3,17 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public class ResultUI : MonoBehaviour {
-    [SerializeField] private Text resultText;
-    [SerializeField] private GameObject winPanel;
-    [SerializeField] private GameObject losePanel;
+    [SerializeField] private Text   resultText;
+    [SerializeField] private Button retryBtn;
+    [SerializeField] private Button menuBtn;
 
     void Start() {
         bool isWin = GameManager.Instance?.State == GameManager.GameState.Win;
-        if (winPanel  != null) winPanel.SetActive(isWin);
-        if (losePanel != null) losePanel.SetActive(!isWin);
         if (resultText != null) resultText.text = isWin ? "MISSION COMPLETE" : "MISSION FAILED";
+        if (retryBtn != null) retryBtn.onClick.AddListener(OnRetryClicked);
+        if (menuBtn  != null) menuBtn.onClick.AddListener(OnMenuClicked);
     }
 
     public void OnRetryClicked() => SceneManager.LoadScene("Game");
-    public void OnMenuClicked()  => SceneManager.LoadScene("Boot");
+    public void OnMenuClicked()  => SceneManager.LoadScene("Game");
 }
