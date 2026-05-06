@@ -69,8 +69,8 @@ public class AimController : MonoBehaviour {
                      : _config.weapon.bulletType == BulletType.Shotgun ? 1.50f
                      : _config.weapon.spread > 5f                      ? 1.10f
                      :                                                    0.80f;
-        _aimLine.startWidth       = 0.030f * wScale;
-        _aimLine.endWidth         = 0.008f * wScale;
+        _aimLine.startWidth       = 0.065f * wScale;
+        _aimLine.endWidth         = 0.022f * wScale;
         _aimLine.sortingLayerName = "Default";
         _aimLine.sortingOrder     = 12;
         _aimLine.material         = new Material(Shader.Find("Sprites/Default"));
@@ -78,7 +78,7 @@ public class AimController : MonoBehaviour {
         var grad = new Gradient();
         grad.SetKeys(
             new[] { new GradientColorKey(col, 0f), new GradientColorKey(col, 1f) },
-            new[] { new GradientAlphaKey(1.00f, 0f), new GradientAlphaKey(0.20f, 0.75f), new GradientAlphaKey(0f, 1f) }
+            new[] { new GradientAlphaKey(0.85f, 0f), new GradientAlphaKey(0.50f, 0.6f), new GradientAlphaKey(0.30f, 1f) }
         );
         _aimLine.colorGradient = grad;
         _aimLine.enabled       = false;
@@ -86,15 +86,18 @@ public class AimController : MonoBehaviour {
         // ── Crosshair ring at target ──────────────────────────────────────────
         var cgo = new GameObject("Crosshair");
         cgo.transform.SetParent(_indicatorRoot.transform, false);
-        float chScale = _config.weapon.bulletType == BulletType.Rocket  ? 0.32f
-                      : _config.weapon.bulletType == BulletType.Shotgun ? 0.30f
-                      : _config.weapon.spread > 5f                      ? 0.24f
-                      :                                                    0.20f;
+        float chScale = _config.weapon.bulletType == BulletType.Rocket  ? 0.60f
+                      : _config.weapon.bulletType == BulletType.Shotgun ? 0.55f
+                      : _config.weapon.spread > 5f                      ? 0.45f
+                      :                                                    0.38f;
         cgo.transform.localScale = new Vector3(chScale, chScale, 1f);
 
         _crosshair                   = cgo.AddComponent<SpriteRenderer>();
         _crosshair.sprite            = BuildCrosshairSprite();
-        _crosshair.color             = new Color(col.r, col.g, col.b, 0.92f);
+        _crosshair.color             = new Color(
+            Mathf.Min(1f, col.r * 1.3f + 0.2f),
+            Mathf.Min(1f, col.g * 1.3f + 0.2f),
+            Mathf.Min(1f, col.b * 1.3f + 0.2f), 1.0f);  // brighter than the line
         _crosshair.sortingLayerName  = "Default";
         _crosshair.sortingOrder      = 12;
         _crosshair.enabled           = false;
