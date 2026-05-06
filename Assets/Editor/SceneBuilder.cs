@@ -131,9 +131,9 @@ public static class SceneBuilder {
         bossSr.color        = bossSprite != null ? Color.white : new Color(0.25f, 0.25f, 0.30f);
         bossSr.sortingOrder = 5;
         if (bossSprite != null)
-            FitSprite(bossBodyGo, bossSprite, 8.0f, 5.0f);
+            FitSprite(bossBodyGo, bossSprite, 5.0f, 8.0f);   // landscape sprite → ~5.0 x 2.8 world units
         else
-            bossBodyGo.transform.localScale = new Vector3(8.0f, 5.0f, 1f);
+            bossBodyGo.transform.localScale = new Vector3(4.5f, 2.5f, 1f);
 
         var bossCtrl = bossGo.AddComponent<BossController>();
         SetField(bossCtrl, "config", bossConfig);
@@ -161,12 +161,13 @@ public static class SceneBuilder {
         var barSp = new Sprite[3]; // damage sprites (healthy / damaged / critical)
         float[] barX = { 3.8f, 5.0f, 6.2f };
         for (int i = 0; i < 3; i++) {
+            // barSprite is landscape (2528×1696) — stretch to portrait so it reads as a tall barrier
             var barGo = MkSprite($"Barricade{i}", terrainParent.transform,
-                new Vector3(barX[i], 2.15f, 0f),
+                new Vector3(barX[i], 1.85f, 0f),              // lower so bottom aligns with ground
                 barSprite ?? white,
                 barSprite != null ? Color.white : new Color(0.80f, 0.65f, 0.20f),
-                new Vector3(0.85f, 1.8f, 1f), 3);
-            if (barSprite != null) FitSprite(barGo, barSprite, 0.85f, 1.8f);
+                new Vector3(0.78f, 1.20f, 1f), 3);
+            if (barSprite != null) StretchSprite(barGo, barSprite, 0.78f, 1.20f);
             barSr[i] = barGo.GetComponent<SpriteRenderer>();
         }
         // 3 damage sprites for barricade (tinted at runtime)
@@ -213,13 +214,13 @@ public static class SceneBuilder {
             var go = new GameObject(names[i]);
             go.transform.SetParent(squadParent.transform);
             go.transform.position   = new Vector3(GameConfig.SQUAD_SLOT_X[i], GameConfig.SQUAD_Y, 0f);
-            go.transform.localScale = new Vector3(1.2f, 1.6f, 1f);
+            go.transform.localScale = new Vector3(0.52f, 0.70f, 1f);  // fallback size (no overlap at 0.6 spacing)
             var sr  = go.AddComponent<SpriteRenderer>();
             var csp = charSprites[i];
             sr.sprite       = csp ?? white;
             sr.color        = csp != null ? Color.white : sColors[i];
             sr.sortingOrder = 8;
-            if (csp != null) FitSprite(go, csp, 1.2f, 1.6f);
+            if (csp != null) FitSprite(go, csp, 0.52f, 1.5f);   // portrait sprite → ~0.52 x 0.70 world units
             var smc = go.AddComponent<SquadMemberController>();
             smc.config = squadCfgs[i];
             SetField(smc, "bodyRenderer", sr);
@@ -897,9 +898,10 @@ public static class SceneBuilder {
                    : name == "Spitter"   ? LoadArtSprite("Assets/Sprites/Enemy/M_3_Shooter.png")
                    : null;
 
-        // Max visual extents per type — canvas is 1792×2400 (17.92×24.0 nat), creature fills a fraction
-        float maxW = name == "Berserker" ? 1.3f : name == "Spitter" ? 1.4f : 1.2f;
-        float maxH = name == "Berserker" ? 1.7f : name == "Spitter" ? 1.9f : 1.6f;
+        // Max visual extents — portrait sprite 1792×2400 (0.747:1), width drives scale
+        // Runner: 0.50×0.67  Berserker: 0.62×0.83  Spitter: 0.45×0.60
+        float maxW = name == "Berserker" ? 0.62f : name == "Spitter" ? 0.45f : 0.50f;
+        float maxH = name == "Berserker" ? 1.80f : name == "Spitter" ? 1.40f : 1.50f;
 
         var tmp = new GameObject(name);
 
@@ -930,9 +932,9 @@ public static class SceneBuilder {
             col.size = nat;
         } else {
             // Procedural fallback: solid-color block with black outline
-            Vector3 fbScale = name == "Berserker" ? new Vector3(0.65f, 0.80f, 1f)
-                            : name == "Spitter"   ? new Vector3(0.55f, 0.65f, 1f)
-                            :                       new Vector3(0.42f, 0.78f, 1f);
+            Vector3 fbScale = name == "Berserker" ? new Vector3(0.62f, 0.83f, 1f)
+                            : name == "Spitter"   ? new Vector3(0.45f, 0.60f, 1f)
+                            :                       new Vector3(0.50f, 0.67f, 1f);
             tmp.transform.localScale = fbScale;
             sr.sprite = white; sr.color = fallbackColor;
 
