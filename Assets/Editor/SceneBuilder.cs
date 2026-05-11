@@ -13,10 +13,9 @@ public static class SceneBuilder {
     const string SCENES  = "Assets/Scenes";
 
     // ─── Entry Points ─────────────────────────────────────────────────────────
-    [MenuItem("SquadVsMonster/Build All Scenes")]
+    [MenuItem("SquadVsMonster/Build All Scenes %&r")]   // Ctrl+Alt+R
     public static void BuildAll() {
-        Build();
-        BuildResult();
+        Build();  // Build() already calls BuildResult()
     }
 
     [MenuItem("SquadVsMonster/Build Game Scene")]
@@ -27,11 +26,12 @@ public static class SceneBuilder {
 
         Sprite white = WhiteSprite();
 
-        var runnerCfg    = MakeMinionConfig("Runner",    MinionType.Runner,    60,  1.2f, 20f, 0.4f, 1.5f, 15f);
-        var berserkerCfg = MakeMinionConfig("Berserker", MinionType.Berserker, 120, 0.8f, 35f, 0.5f, 1.2f, 20f);
-        var spitterCfg   = MakeMinionConfig("Spitter",   MinionType.Spitter,   80,  1.0f, 25f, 4.0f, 2.5f, 10f);
+        var runnerCfg    = MakeMinionConfig("Runner",    MinionType.Runner,    60,  1.2f, 20f, 0.4f, 1.5f, 15f, 3.00f);
+        var berserkerCfg = MakeMinionConfig("Berserker", MinionType.Berserker, 120, 0.8f, 35f, 0.5f, 1.2f, 20f, 3.60f);
+        var spitterCfg   = MakeMinionConfig("Spitter",   MinionType.Spitter,   80,  1.0f, 25f, 4.0f, 2.5f, 10f, 2.80f);
         var bossConfig   = MakeBossConfig();
         var squadCfgs    = MakeSquadConfigs();
+        var mapConfig    = MakeMapConfig();
         AssetDatabase.SaveAssets();
 
         var bulletPrefab    = MakeBulletPrefab(white);
@@ -40,13 +40,17 @@ public static class SceneBuilder {
         var spitterPrefab   = MakeMinionPrefab("Spitter",   spitterCfg,   white, new Color(0.20f, 0.95f, 0.45f)); // vivid green
 
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-        BuildGameScene(white, bossConfig, squadCfgs,
+        BuildGameScene(white, bossConfig, squadCfgs, mapConfig,
                        runnerCfg, berserkerCfg, spitterCfg,
                        bulletPrefab, runnerPrefab, berserkerPrefab, spitterPrefab);
 
         string scenePath = SCENES + "/Game.unity";
         EditorSceneManager.SaveScene(scene, scenePath);
         AddToBuildSettings(scenePath);
+
+        // Always ensure Result scene is also built and registered
+        BuildResult();
+
         AssetDatabase.Refresh();
 
         bool open = EditorUtility.DisplayDialog("SceneBuilder", "Game scene built!\nAssets/Scenes/Game.unity", "Open", "Close");
@@ -67,7 +71,7 @@ public static class SceneBuilder {
 
     // ─── Game Scene ────────────────────────────────────────────────────────────
     static void BuildGameScene(
-        Sprite white, BossConfigSO bossConfig, SquadMemberConfigSO[] squadCfgs,
+        Sprite white, BossConfigSO bossConfig, SquadMemberConfigSO[] squadCfgs, MapConfigSO mapConfig,
         MinionConfigSO runnerCfg, MinionConfigSO berserkerCfg, MinionConfigSO spitterCfg,
         GameObject bulletPrefab, GameObject runnerPrefab,
         GameObject berserkerPrefab, GameObject spitterPrefab) {
@@ -95,7 +99,7 @@ public static class SceneBuilder {
         var cam = camGo.AddComponent<Camera>();
         cam.orthographic     = true;
         cam.orthographicSize = 4.0f;
-        camGo.transform.position = new Vector3(7.5f, 2.5f, -10f);
+        camGo.transform.position = new Vector3(7.5f, 3.0f, -10f);
         cam.backgroundColor  = new Color(0.04f, 0.06f, 0.15f);
         cam.nearClipPlane    = 0.3f;
         cam.farClipPlane     = 100f;
@@ -131,9 +135,9 @@ public static class SceneBuilder {
         bossSr.color        = bossSprite != null ? Color.white : new Color(0.25f, 0.25f, 0.30f);
         bossSr.sortingOrder = 5;
         if (bossSprite != null)
-            FitSprite(bossBodyGo, bossSprite, 5.0f, 8.0f);   // landscape sprite → ~5.0 x 2.8 world units
+            FitSprite(bossBodyGo, bossSprite, 10.0f, 16.0f);
         else
-            bossBodyGo.transform.localScale = new Vector3(4.5f, 2.5f, 1f);
+            bossBodyGo.transform.localScale = new Vector3(9.0f, 5.0f, 1f);
 
         var bossCtrl = bossGo.AddComponent<BossController>();
         SetField(bossCtrl, "config", bossConfig);
@@ -154,20 +158,22 @@ public static class SceneBuilder {
         var terrainParent = new GameObject("Terrain");
         var wallSr = MkSprite("Wall", terrainParent.transform,
             new Vector3(GameConfig.WALL_X, GameConfig.WALL_Y, 0f),
-            white, new Color(0.70f, 0.68f, 0.60f), new Vector3(0.5f, 4.0f, 1f), 2
+            white, new Color(0.70f, 0.68f, 0.60f), new Vector3(1.0f, 8.0f, 1f), 2
         ).GetComponent<SpriteRenderer>();
 
         var barSr = new SpriteRenderer[3];
         var barSp = new Sprite[3]; // damage sprites (healthy / damaged / critical)
         float[] barX = { 3.8f, 5.0f, 6.2f };
+        // Y values follow the boss diagonal path (upper-right → lower-left)
+        float[] barY = { 1.64f, 2.10f, 2.55f };
         for (int i = 0; i < 3; i++) {
             // barSprite is landscape (2528×1696) — stretch to portrait so it reads as a tall barrier
             var barGo = MkSprite($"Barricade{i}", terrainParent.transform,
-                new Vector3(barX[i], 1.85f, 0f),              // lower so bottom aligns with ground
+                new Vector3(barX[i], barY[i], 0f),
                 barSprite ?? white,
                 barSprite != null ? Color.white : new Color(0.80f, 0.65f, 0.20f),
-                new Vector3(0.78f, 1.20f, 1f), 3);
-            if (barSprite != null) StretchSprite(barGo, barSprite, 0.78f, 1.20f);
+                new Vector3(1.56f, 2.40f, 1f), 3);
+            if (barSprite != null) StretchSprite(barGo, barSprite, 1.56f, 2.40f);
             barSr[i] = barGo.GetComponent<SpriteRenderer>();
         }
         // 3 damage sprites for barricade (tinted at runtime)
@@ -177,10 +183,11 @@ public static class SceneBuilder {
 
         var rbSr = new SpriteRenderer[3];
         float[] rbX = { 8.5f, 10.0f, 11.5f };
+        float[] rbY = { 3.42f, 3.99f, 4.56f };
         for (int i = 0; i < 3; i++) {
             rbSr[i] = MkSprite($"RoadBlock{i}", terrainParent.transform,
-                new Vector3(rbX[i], 2.15f, 0f), white,
-                new Color(0.65f, 0.52f, 0.38f), new Vector3(0.95f, 1.8f, 1f), 1
+                new Vector3(rbX[i], rbY[i], 0f), white,
+                new Color(0.65f, 0.52f, 0.38f), new Vector3(1.90f, 3.60f, 1f), 1
             ).GetComponent<SpriteRenderer>();
         }
 
@@ -214,13 +221,13 @@ public static class SceneBuilder {
             var go = new GameObject(names[i]);
             go.transform.SetParent(squadParent.transform);
             go.transform.position   = new Vector3(GameConfig.SQUAD_SLOT_X[i], GameConfig.SQUAD_Y, 0f);
-            go.transform.localScale = new Vector3(0.52f, 0.70f, 1f);  // fallback size (no overlap at 0.6 spacing)
+            go.transform.localScale = new Vector3(1.04f, 1.40f, 1f);  // fallback size (2× scale)
             var sr  = go.AddComponent<SpriteRenderer>();
             var csp = charSprites[i];
             sr.sprite       = csp ?? white;
             sr.color        = csp != null ? Color.white : sColors[i];
             sr.sortingOrder = 8;
-            if (csp != null) FitSprite(go, csp, 0.52f, 1.5f);   // portrait sprite → ~0.52 x 0.70 world units
+            if (csp != null) FitSprite(go, csp, 1.04f, 3.0f);   // portrait sprite → ~1.04 x 1.40 world units
             var smc = go.AddComponent<SquadMemberController>();
             smc.config = squadCfgs[i];
             SetField(smc, "bodyRenderer", sr);
@@ -248,6 +255,7 @@ public static class SceneBuilder {
         SetField(ws, "runnerPrefab",    runnerPrefab);
         SetField(ws, "berserkerPrefab", berserkerPrefab);
         SetField(ws, "spitterPrefab",   spitterPrefab);
+        SetField(ws, "mapConfig",       mapConfig);
 
         var fsGo = new GameObject("FireSystem");
         fsGo.transform.SetParent(sysParent.transform);
@@ -327,8 +335,29 @@ public static class SceneBuilder {
         BuildBombButton(canvasGo.transform, bossCtrl);
         BuildHintText(canvasGo.transform);
 
+        // ── End-of-game overlay (hidden by default, shown by UIManager on game end) ──
+        var overlayBgImg = MkUiImg(canvasGo.transform, "EndOverlayBg",
+            new Color(0f, 0f, 0f, 0f), stretch: true);
+        overlayBgImg.gameObject.SetActive(false);
+
+        var overlayTextGo = new GameObject("EndOverlayText", typeof(RectTransform));
+        overlayTextGo.transform.SetParent(canvasGo.transform, false);
+        var overlayRt = overlayTextGo.GetComponent<RectTransform>();
+        overlayRt.anchorMin = new Vector2(0f, 0.35f); overlayRt.anchorMax = new Vector2(1f, 0.65f);
+        overlayRt.offsetMin = Vector2.zero;            overlayRt.offsetMax = Vector2.zero;
+        var overlayText = overlayTextGo.AddComponent<Text>();
+        overlayText.text      = "";
+        overlayText.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        overlayText.fontSize  = 96;
+        overlayText.fontStyle = FontStyle.Bold;
+        overlayText.alignment = TextAnchor.MiddleCenter;
+        overlayText.color     = Color.white;
+        overlayTextGo.SetActive(false);
+
         var uiMgr = canvasGo.AddComponent<UIManager>();
-        SetField(uiMgr, "bossHpBar", bossBarUi);
+        SetField(uiMgr, "bossHpBar",      bossBarUi);
+        SetField(uiMgr, "endOverlayBg",   overlayBgImg);
+        SetField(uiMgr, "endOverlayText", overlayText);
         SetArrayField(uiMgr, "squadHpBars",  ToObj(squadBars));
         SetArrayField(uiMgr, "ammoDisplays", ToObj(ammoDisplays));
         SetArrayField(uiMgr, "squadConfigs", ToObj(squadCfgs));
@@ -489,7 +518,7 @@ public static class SceneBuilder {
         for (int i = 0; i < 5; i++) {
             float colX = i * (colW + gap) + 5f;
 
-            var col = new GameObject($"Col_{mNames[i]}");
+            var col = new GameObject($"Col_{mNames[i]}", typeof(RectTransform));
             col.transform.SetParent(panel.transform, false);
             SetRt(col, Vector2.zero, Vector2.zero, new Vector2(colX, 4f), new Vector2(colW, colH));
 
@@ -513,20 +542,20 @@ public static class SceneBuilder {
                 new Vector2(0,0), new Vector2(0,0), new Vector2(0f, 92f), new Vector2(colW, 18f));
 
             // ── HP slider — y = 62..86 (24px)
-            var hpGo = new GameObject("HpSlider");
+            var hpGo = new GameObject("HpSlider", typeof(RectTransform));
             hpGo.transform.SetParent(col.transform, false);
             SetRt(hpGo, Vector2.zero, Vector2.zero, new Vector2(6f, 62f), new Vector2(colW - 12f, 24f));
             var hpSlider = BuildSliderInGo(hpGo, mColors[i], new Color(0.10f, 0.10f, 0.14f));
 
             // ── Reload slider (hidden) — y = 44..58 (14px)
-            var rlGo = new GameObject("ReloadSlider");
+            var rlGo = new GameObject("ReloadSlider", typeof(RectTransform));
             rlGo.transform.SetParent(col.transform, false);
             SetRt(rlGo, Vector2.zero, Vector2.zero, new Vector2(6f, 44f), new Vector2(colW - 12f, 14f));
             var reloadSlider = BuildSliderInGo(rlGo, new Color(0.25f, 0.65f, 1.0f), new Color(0.10f, 0.10f, 0.14f));
             rlGo.SetActive(false);
 
             // ── Ammo text — y = 12..34 (22px)
-            var ammoGo = new GameObject("AmmoText");
+            var ammoGo = new GameObject("AmmoText", typeof(RectTransform));
             ammoGo.transform.SetParent(col.transform, false);
             SetRt(ammoGo, Vector2.zero, Vector2.zero, new Vector2(0f, 12f), new Vector2(colW, 22f));
             var ammoText = ammoGo.AddComponent<Text>();
@@ -570,7 +599,7 @@ public static class SceneBuilder {
             new Vector2(0,0), new Vector2(1,0), new Vector2(0f, 6f), new Vector2(0f, 22f));
 
         // Button fills middle area (y=32..y=H-30)
-        var btnGo = new GameObject("BombBtn");
+        var btnGo = new GameObject("BombBtn", typeof(RectTransform));
         btnGo.transform.SetParent(panel.transform, false);
         SetRt(btnGo, new Vector2(0.06f, 0f), new Vector2(0.94f, 1f),
             new Vector2(0f, 32f), new Vector2(0f, -62f));
@@ -588,7 +617,7 @@ public static class SceneBuilder {
         btn.targetGraphic = baseImg;
 
         // Cooldown radial overlay
-        var cdGo = new GameObject("CooldownOverlay");
+        var cdGo = new GameObject("CooldownOverlay", typeof(RectTransform));
         cdGo.transform.SetParent(btnGo.transform, false);
         SetRt(cdGo, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
         var cdImg = cdGo.AddComponent<Image>();
@@ -642,14 +671,14 @@ public static class SceneBuilder {
         cs.matchWidthOrHeight  = 0.5f;
         canvasGo.AddComponent<GraphicRaycaster>();
 
-        // Background
-        MkUiImg(canvasGo.transform, "ResultBg", new Color(0.04f, 0.05f, 0.10f, 1f), stretch: true);
+        // Background (tinted at runtime by ResultUI)
+        var resultBgImg = MkUiImg(canvasGo.transform, "ResultBg", new Color(0.04f, 0.05f, 0.10f, 1f), stretch: true).GetComponent<Image>();
 
-        // Center panel
+        // Center panel (background tinted at runtime by ResultUI)
         var centerPanel = MkPanel(canvasGo.transform, "CenterPanel",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
             Vector2.zero, new Vector2(600f, 320f));
-        MkUiImg(centerPanel.transform, "PanelBg", new Color(0.08f, 0.09f, 0.16f, 0.95f), stretch: true);
+        var panelBgImg = MkUiImg(centerPanel.transform, "PanelBg", new Color(0.08f, 0.09f, 0.16f, 0.95f), stretch: true).GetComponent<Image>();
 
         // Result text
         var resultText = MkText(centerPanel.transform, "ResultText", "MISSION COMPLETE",
@@ -670,6 +699,8 @@ public static class SceneBuilder {
         SetField(resultUi, "resultText", resultText);
         SetField(resultUi, "retryBtn",   retryGo.GetComponent<Button>());
         SetField(resultUi, "menuBtn",    menuGo.GetComponent<Button>());
+        SetField(resultUi, "panelBg",    panelBgImg);
+        SetField(resultUi, "resultBg",   resultBgImg);
     }
 
     static GameObject BuildResultButton(Transform parent, string name, string label,
@@ -791,14 +822,16 @@ public static class SceneBuilder {
         cfg.enrageHpThreshold = 0.5f;
         // Boss canvas 2752×1536 at PPU=100 → 27.52×15.36 nat; FitSprite(8,5) → s=0.2907 → 8.0×4.47 rendered
         // Creature fills ~60%W×70%H → ~4.8×3.1 world units. Parts in world-unit offsets from boss root.
+        // damageMult = armor coefficient while intact  (< 1 = resists damage, > 1 = weak spot)
+        // After destruction the collider stays live and damage passes through at 70% (see BossController)
         cfg.parts = new BossPartConfig[] {
-            new BossPartConfig { id="HEAD",  hp=600,  damageMult=1.5f, offset=new Vector2( 1.50f,  0.80f), size=new Vector2(1.20f,0.90f), activeOnStart=true  },
-            new BossPartConfig { id="CHEST", hp=1200, damageMult=1.0f, offset=new Vector2( 0.00f,  0.00f), size=new Vector2(2.20f,1.50f), activeOnStart=true  },
-            new BossPartConfig { id="ARM_L", hp=400,  damageMult=0.8f, offset=new Vector2(-2.20f,  0.30f), size=new Vector2(1.00f,1.40f), activeOnStart=true  },
-            new BossPartConfig { id="ARM_R", hp=400,  damageMult=0.8f, offset=new Vector2( 2.20f,  0.30f), size=new Vector2(1.00f,1.40f), activeOnStart=true  },
-            new BossPartConfig { id="LEG_L", hp=350,  damageMult=0.7f, offset=new Vector2(-1.50f, -0.90f), size=new Vector2(0.90f,1.00f), activeOnStart=true  },
-            new BossPartConfig { id="LEG_R", hp=350,  damageMult=0.7f, offset=new Vector2( 1.50f, -0.90f), size=new Vector2(0.90f,1.00f), activeOnStart=true  },
-            new BossPartConfig { id="CORE",  hp=800,  damageMult=2.0f, offset=new Vector2( 0.00f,  0.00f), size=new Vector2(1.00f,0.90f), activeOnStart=false },
+            new BossPartConfig { id="HEAD",  hp=600,  damageMult=0.50f, offset=new Vector2( 1.50f,  0.80f), size=new Vector2(1.20f,0.90f), activeOnStart=true  },
+            new BossPartConfig { id="CHEST", hp=1200, damageMult=0.35f, offset=new Vector2( 0.00f,  0.00f), size=new Vector2(2.20f,1.50f), activeOnStart=true  },
+            new BossPartConfig { id="ARM_L", hp=400,  damageMult=0.55f, offset=new Vector2(-2.20f,  0.30f), size=new Vector2(1.00f,1.40f), activeOnStart=true  },
+            new BossPartConfig { id="ARM_R", hp=400,  damageMult=0.55f, offset=new Vector2( 2.20f,  0.30f), size=new Vector2(1.00f,1.40f), activeOnStart=true  },
+            new BossPartConfig { id="LEG_L", hp=350,  damageMult=0.45f, offset=new Vector2(-1.50f, -0.90f), size=new Vector2(0.90f,1.00f), activeOnStart=true  },
+            new BossPartConfig { id="LEG_R", hp=350,  damageMult=0.45f, offset=new Vector2( 1.50f, -0.90f), size=new Vector2(0.90f,1.00f), activeOnStart=true  },
+            new BossPartConfig { id="CORE",  hp=800,  damageMult=3.00f, offset=new Vector2( 0.00f,  0.00f), size=new Vector2(1.00f,0.90f), activeOnStart=false },
         };
         EditorUtility.SetDirty(cfg);
         return cfg;
@@ -817,11 +850,16 @@ public static class SceneBuilder {
         };
         // SNIPER / AR / SHOTGUN / ROCKET / DMR
         WeaponConfig[] weapons = {
-            new WeaponConfig { name="Barrett", magazineSize= 6, damage=120f, fireRate=2.20f, reloadTime=1.8f, bulletSpeed=2500f, bulletType=BulletType.Single, pellets=1, spread= 0f },
-            new WeaponConfig { name="M249",    magazineSize=40, damage= 12f, fireRate=0.08f, reloadTime=3.5f, bulletSpeed=1500f, bulletType=BulletType.Single, pellets=1, spread= 8f },
-            new WeaponConfig { name="KS-23",   magazineSize= 4, damage= 18f, fireRate=0.90f, reloadTime=2.5f, bulletSpeed= 800f, bulletType=BulletType.Shotgun,pellets=8, spread=20f, maxRange=4.5f },
-            new WeaponConfig { name="RPG",     magazineSize= 3, damage= 90f, fireRate=2.50f, reloadTime=3.0f, bulletSpeed= 800f, bulletType=BulletType.Rocket, pellets=1, spread= 5f, splashRadius=150f },
-            new WeaponConfig { name="Railgun", magazineSize= 2, damage=280f, fireRate=4.00f, reloadTime=3.0f, bulletSpeed=3000f, bulletType=BulletType.Single, pellets=1, spread= 0f },
+            // Sniper — no max range; fires at any distance
+            new WeaponConfig { name="Barrett", magazineSize= 6, damage=120f, fireRate=2.20f, reloadTime=1.8f, bulletSpeed=2500f, bulletType=BulletType.Single,  pellets=1, spread= 0f, maxRange=  0f },
+            // AR — 5-round burst (fast shots), then 1.8 s cooldown; limited to 8 wu
+            new WeaponConfig { name="M249",    magazineSize= 5, damage= 15f, fireRate=0.07f, reloadTime=1.8f, bulletSpeed=1500f, bulletType=BulletType.Single,  pellets=1, spread= 8f, maxRange=8.0f },
+            // Shotgun — tight spread, 3.5 wu max; won't fire if target out of range
+            new WeaponConfig { name="KS-23",   magazineSize= 4, damage= 18f, fireRate=0.90f, reloadTime=2.5f, bulletSpeed= 800f, bulletType=BulletType.Shotgun, pellets=8, spread=20f, maxRange=3.5f },
+            // Rocket — splash damage, 11 wu max
+            new WeaponConfig { name="RPG",     magazineSize= 3, damage= 90f, fireRate=2.50f, reloadTime=3.0f, bulletSpeed= 800f, bulletType=BulletType.Rocket,  pellets=1, spread= 5f, splashRadius=150f, maxRange=11.0f },
+            // DMR — semi-auto precision, 9 wu max
+            new WeaponConfig { name="Railgun", magazineSize= 2, damage=280f, fireRate=4.00f, reloadTime=3.0f, bulletSpeed=3000f, bulletType=BulletType.Single,  pellets=1, spread= 0f, maxRange=9.0f },
         };
         SpecialType[] specials    = { SpecialType.WeakpointBonus, SpecialType.BurstAccuracy, SpecialType.None, SpecialType.RocketSplash, SpecialType.WeakpointMark };
         float[]       specialVals = { 2.0f, 1.3f, 1f, 1.8f, 1.4f };
@@ -846,12 +884,30 @@ public static class SceneBuilder {
         return result;
     }
 
+    static MapConfigSO MakeMapConfig() {
+        var cfg = LoadOrCreate<MapConfigSO>(CONFIGS + "/MapConfig.asset");
+        cfg.destX = GameConfig.DEFENSE_LINE;
+        cfg.destY = GameConfig.SQUAD_Y;
+        // 3 spawn paths along the diagonal (upper-right → lower-left)
+        // Only reset if zones are empty or unset — preserves manual edits
+        if (cfg.spawnZones == null || cfg.spawnZones.Length == 0) {
+            cfg.spawnZones = new SpawnZone[] {
+                new SpawnZone { xMin=12.5f, xMax=13.5f, yMin=4.50f, yMax=5.50f, weight=1f }, // 상단 경로
+                new SpawnZone { xMin=11.5f, xMax=12.5f, yMin=3.60f, yMax=4.40f, weight=1f }, // 중단 경로
+                new SpawnZone { xMin=12.0f, xMax=13.0f, yMin=5.00f, yMax=5.80f, weight=1f }, // 최상단 경로
+            };
+        }
+        EditorUtility.SetDirty(cfg);
+        return cfg;
+    }
+
     static MinionConfigSO MakeMinionConfig(string name, MinionType type,
-        int hp, float speed, float damage, float attackRange, float attackInterval, float terrainDamage) {
+        int hp, float speed, float damage, float attackRange, float attackInterval, float terrainDamage,
+        float spriteHalfHeight = 0f) {
         var cfg = LoadOrCreate<MinionConfigSO>($"{CONFIGS}/MinionConfig_{name}.asset");
         cfg.type = type; cfg.hp = hp; cfg.speed = speed; cfg.damage = damage;
         cfg.attackRange = attackRange; cfg.attackInterval = attackInterval;
-        cfg.terrainDamage = terrainDamage;
+        cfg.terrainDamage = terrainDamage; cfg.spriteHalfHeight = spriteHalfHeight;
         EditorUtility.SetDirty(cfg);
         return cfg;
     }
@@ -898,10 +954,9 @@ public static class SceneBuilder {
                    : name == "Spitter"   ? LoadArtSprite("Assets/Sprites/Enemy/M_3_Shooter.png")
                    : null;
 
-        // Max visual extents — portrait sprite 1792×2400 (0.747:1), width drives scale
-        // Runner: 0.50×0.67  Berserker: 0.62×0.83  Spitter: 0.45×0.60
-        float maxW = name == "Berserker" ? 0.62f : name == "Spitter" ? 0.45f : 0.50f;
-        float maxH = name == "Berserker" ? 1.80f : name == "Spitter" ? 1.40f : 1.50f;
+        // Max visual extents — 4× scale: Runner 2.00×6.00, Berserker 2.48×7.20, Spitter 1.80×5.60
+        float maxW = name == "Berserker" ? 2.48f : name == "Spitter" ? 1.80f : 2.00f;
+        float maxH = name == "Berserker" ? 7.20f : name == "Spitter" ? 5.60f : 6.00f;
 
         var tmp = new GameObject(name);
 
@@ -932,9 +987,9 @@ public static class SceneBuilder {
             col.size = nat;
         } else {
             // Procedural fallback: solid-color block with black outline
-            Vector3 fbScale = name == "Berserker" ? new Vector3(0.62f, 0.83f, 1f)
-                            : name == "Spitter"   ? new Vector3(0.45f, 0.60f, 1f)
-                            :                       new Vector3(0.50f, 0.67f, 1f);
+            Vector3 fbScale = name == "Berserker" ? new Vector3(2.48f, 3.32f, 1f)
+                            : name == "Spitter"   ? new Vector3(1.80f, 2.40f, 1f)
+                            :                       new Vector3(2.00f, 2.68f, 1f);
             tmp.transform.localScale = fbScale;
             sr.sprite = white; sr.color = fallbackColor;
 

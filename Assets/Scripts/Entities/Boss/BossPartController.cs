@@ -16,6 +16,9 @@ public class BossPartController : MonoBehaviour {
     private SpriteRenderer  _renderer;
     private Color           _activeColor;
 
+    private float _breakAccum;
+    private const float BREAK_THRESHOLD = 150f;  // 파괴 부위에 누적 이 수치 도달 시 브레이크 연출
+
     public void Initialize(BossPartConfig cfg) {
         PartId     = cfg.id;
         MaxHp      = cfg.hp;
@@ -54,12 +57,22 @@ public class BossPartController : MonoBehaviour {
     }
 
     public float TakeDamage(float amount) {
-        if (IsDestroyed) return 0f;
+        // Always show hit feedback — even destroyed parts register the hit visually
+        StartCoroutine(HitFlashCoroutine());
+        VFXSystem.Instance?.ShowHit(transform.position, _activeColor);
+
+        if (IsDestroyed) {
+            _breakAccum += amount;
+            if (_breakAccum >= BREAK_THRESHOLD) {
+                _breakAccum = 0f;
+                GameEvents.RaiseBossPartBreak(PartId, transform.position);
+            }
+            return amount;
+        }
+
         float applied = Mathf.Min(Hp, amount);
         Hp -= applied;
         UpdateDamageVisual();
-        StartCoroutine(HitFlashCoroutine());
-        VFXSystem.Instance?.ShowHit(transform.position, _activeColor);
         if (Hp <= 0f) DestroyPart();
         return applied;
     }
@@ -80,8 +93,8 @@ public class BossPartController : MonoBehaviour {
 
     private void DestroyPart() {
         IsDestroyed = true;
-        if (_collider != null) _collider.enabled = false;
-        if (_renderer != null) _renderer.color   = new Color(0.10f, 0.02f, 0.02f, 0.60f);
+        // Collider stays enabled so bullets still register hits on the destroyed area
+        if (_renderer != null) _renderer.color = new Color(0.10f, 0.02f, 0.02f, 0.60f);
         GameEvents.RaiseBossPartDestroyed(PartId);
     }
 }

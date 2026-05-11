@@ -138,7 +138,7 @@ public class AimController : MonoBehaviour {
     // ── Aim logic (unchanged) ─────────────────────────────────────────────────
 
     private void CleanupUserTarget() {
-        if (_userTargetPart != null && (!_userTargetPart.IsActive || _userTargetPart.IsDestroyed))
+        if (_userTargetPart != null && !_userTargetPart.IsActive)
             _userTargetPart = null;
         if (_userTargetMinion != null && !_userTargetMinion.IsAlive)
             _userTargetMinion = null;
@@ -157,16 +157,23 @@ public class AimController : MonoBehaviour {
             TargetPartId   = null;
             return;
         }
-        if (_boss != null && _boss.IsAlive && _config.aimPriority != null) {
-            foreach (var pid in _config.aimPriority) {
-                var part = _boss.GetPart(pid);
-                if (part != null && part.IsActive && !part.IsDestroyed) {
-                    HasTarget      = true;
-                    _desiredAimPos = part.transform.position;
-                    TargetPartId   = pid;
-                    return;
+        if (_boss != null && _boss.IsAlive) {
+            if (_config.aimPriority != null) {
+                foreach (var pid in _config.aimPriority) {
+                    var part = _boss.GetPart(pid);
+                    if (part != null && part.IsActive && !part.IsDestroyed) {
+                        HasTarget      = true;
+                        _desiredAimPos = part.transform.position;
+                        TargetPartId   = pid;
+                        return;
+                    }
                 }
             }
+            // All priority parts destroyed but boss still alive — aim at boss body
+            HasTarget      = true;
+            _desiredAimPos = _boss.transform.position;
+            TargetPartId   = null;
+            return;
         }
         HasTarget    = false;
         TargetPartId = null;

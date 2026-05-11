@@ -9,6 +9,8 @@ public class WaveSystem : MonoBehaviour {
     [SerializeField] private GameObject berserkerPrefab;
     [SerializeField] private GameObject spitterPrefab;
 
+    [SerializeField] private MapConfigSO mapConfig;
+
     public struct PhaseParams {
         public float interval;
         public int countMin, countMax;
@@ -54,9 +56,11 @@ public class WaveSystem : MonoBehaviour {
         int count = Random.Range(p.countMin, p.countMax + 1);
         for (int i = 0; i < count; i++) {
             var type = WeightedRandom(p);
-            float x  = Random.Range(GameConfig.SPAWN_X_MIN, GameConfig.SPAWN_X_MAX);
-            float y  = Random.Range(GameConfig.SPAWN_Y_MIN, GameConfig.SPAWN_Y_MAX);
-            var   pos = new Vector2(x, y);
+            Vector2 pos = mapConfig != null
+                ? mapConfig.RandomSpawnPoint()
+                : new Vector2(
+                    Random.Range(GameConfig.SPAWN_X_MIN, GameConfig.SPAWN_X_MAX),
+                    Random.Range(GameConfig.SPAWN_Y_MIN, GameConfig.SPAWN_Y_MAX));
             SpawnMinion(type, pos);
             GameEvents.RaiseSpawnMinion(type, pos);
         }
@@ -64,16 +68,31 @@ public class WaveSystem : MonoBehaviour {
 
     private void SpawnMinion(MinionType type, Vector2 pos) {
         GameObject prefab = type switch {
-            MinionType.Runner   => runnerPrefab,
+            MinionType.Runner    => runnerPrefab,
             MinionType.Berserker => berserkerPrefab,
-            MinionType.Spitter  => spitterPrefab,
+            MinionType.Spitter   => spitterPrefab,
             _ => runnerPrefab
         };
         if (prefab == null) {
             Debug.LogWarning($"[WaveSystem] Prefab for {type} not assigned.");
             return;
         }
-        Instantiate(prefab, pos, Quaternion.identity);
+
+        // Offset Y so feet land at pos.y (transform.position = sprite center by default)
+        MinionConfigSO cfg = type switch {
+            MinionType.Runner    => runnerConfig,
+            MinionType.Berserker => berserkerConfig,
+            MinionType.Spitter   => spitterConfig,
+            _ => null
+        };
+        float yOff = cfg != null ? cfg.spriteHalfHeight : 0f;
+        var spawnPos = new Vector3(pos.x, pos.y + yOff, 0f);
+
+        var go = Instantiate(prefab, spawnPos, Quaternion.identity);
+        if (mapConfig != null) {
+            var mc = go.GetComponent<MinionController>();
+            if (mc != null) mc.mapConfig = mapConfig;
+        }
     }
 
     private MinionType WeightedRandom(PhaseParams p) {

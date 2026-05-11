@@ -27,6 +27,7 @@ MonoBehaviour:
     pellets: 8
     spread: 20
     splashRadius: 0
+    maxRange: 3.5
   special: 0
   specialVal: 1
   aimPriority:

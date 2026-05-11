@@ -63,10 +63,8 @@ public class SquadMemberController : MonoBehaviour {
         float   angle  = Mathf.Atan2(aimPos.y - muzzle.y, aimPos.x - muzzle.x);
         float   dist   = Vector2.Distance(muzzle, aimPos);
 
-        // Shotgun: refuse to fire when target is out of effective range
-        if (config.weapon.bulletType == BulletType.Shotgun
-            && config.weapon.maxRange > 0f
-            && dist > config.weapon.maxRange)
+        // Don't fire if target is beyond max effective range (sniper has maxRange=0 = unlimited)
+        if (config.weapon.maxRange > 0f && dist > config.weapon.maxRange)
             return;
 
         float dmg             = config.weapon.damage;

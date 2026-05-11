@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /c/Development/SquadVsMonster/docs/01-plan/features /c/Development/SquadVsMonster/docs/02-design/features /c/Development/SquadVsMonster/docs/superpowers/plans)",
+      "Bash(cp /c/Development/12_NIKKE/docs/01-plan/features/squad-vs-monster.plan.md /c/Development/SquadVsMonster/docs/01-plan/features/)",
+      "Bash(cp /c/Development/12_NIKKE/docs/02-design/features/squad-vs-monster.design.md /c/Development/SquadVsMonster/docs/02-design/features/)",
+      "Bash(cp /c/Development/12_NIKKE/docs/superpowers/plans/2026-04-22-unity-migration.md /c/Development/SquadVsMonster/docs/superpowers/plans/)",
+      "Bash(git remote:*)",
+      "Bash(python3:*)",
+      "Bash(py:*)",
+      "Bash(grep -n \"public Color color\\\\|public Color \" Assets/Scripts/Config/*.cs)",
+      "Bash(grep -n \"reloadSlider\\\\|reloadProgress\\\\|IsReloading\" Assets/Scripts/UI/*.cs Assets/Scripts/UI/*.cs)",
+      "Bash(python -c \":*)",
+      "Bash(powershell -Command \"\nAdd-Type -AssemblyName System.Drawing\n@\\('Assets/Sprites/Background/stage_1.png','Assets/Sprites/Enemy/B_1_NM.png','Assets/Sprites/Enemy/M_1_Runner.png','Assets/Sprites/Enemy/M_2_Leader.png','Assets/Sprites/Enemy/M_3_Shooter.png','Assets/Sprites/Character/character \\(1\\).png','Assets/Sprites/Character/character \\(2\\).png','Assets/Sprites/Object/Barricade_1.png'\\) | ForEach-Object {\n    try {\n        \\\\$img = [System.Drawing.Image]::FromFile\\(\\(Resolve-Path \\\\$_\\).Path\\)\n        '{0,-30} {1} x {2}' -f \\(Split-Path \\\\$_ -Leaf\\), \\\\$img.Width, \\\\$img.Height\n        \\\\$img.Dispose\\(\\)\n    } catch { '{0,-30} ERROR' -f \\\\$_ }\n}\")",
+      "Read(//c/Program Files/Unity/Hub/Editor/**)",
+      "Read(//c/Program Files/Unity/**)"
+    ]
+  }
+}

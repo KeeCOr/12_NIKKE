@@ -37,6 +37,12 @@ public class VFXSystem : MonoBehaviour {
     public void ShowShockwave(Vector3 pos) =>
         Burst(pos, new Color(0.55f, 0.20f, 1.00f), 22, 0.50f, 3.5f, 0.08f, 0.6f, 0.0f);
 
+    /// Large break burst when a destroyed part accumulates enough damage.
+    public void ShowPartBreak(Vector3 pos) {
+        Burst(pos, new Color(1.0f, 1.0f, 0.80f), 45, 0.65f, 7.0f, 0.15f, 1.1f, 0.25f);
+        Burst(pos, new Color(1.0f, 0.35f, 0.05f), 28, 0.45f, 4.5f, 0.10f, 0.8f, 0.40f);
+    }
+
     // ── Internal ────────────────────────────────────────────────────────────
 
     private static Material _mat;

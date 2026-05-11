@@ -1,10 +1,14 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour {
     [SerializeField] private BossHpBarUI bossHpBar;
     [SerializeField] private SquadHpBarUI[] squadHpBars;
     [SerializeField] private AmmoDisplayUI[] ammoDisplays;
     [SerializeField] private SquadMemberConfigSO[] squadConfigs;
+
+    [SerializeField] private Image endOverlayBg;
+    [SerializeField] private Text  endOverlayText;
 
     private System.Action<string, int, int>[] _ammoHandlers;
     private System.Action<string>[]           _reloadStartHandlers;
@@ -13,6 +17,7 @@ public class UIManager : MonoBehaviour {
     private System.Action<string>[]           _memberDiedHandlers;
 
     void OnEnable() {
+        GameEvents.OnGameEnded += ShowEndOverlay;
         if (bossHpBar != null) {
             GameEvents.OnBossHpChanged     += bossHpBar.OnBossHpChanged;
             GameEvents.OnBossPartDestroyed += bossHpBar.OnPartDestroyed;
@@ -47,7 +52,24 @@ public class UIManager : MonoBehaviour {
         }
     }
 
+    private void ShowEndOverlay(bool isWin) {
+        if (endOverlayBg != null) {
+            endOverlayBg.gameObject.SetActive(true);
+            endOverlayBg.color = isWin
+                ? new Color(0.02f, 0.18f, 0.04f, 0.82f)
+                : new Color(0.22f, 0.02f, 0.02f, 0.82f);
+        }
+        if (endOverlayText != null) {
+            endOverlayText.gameObject.SetActive(true);
+            endOverlayText.text  = isWin ? "VICTORY!" : "DEFEAT...";
+            endOverlayText.color = isWin
+                ? new Color(1.0f, 0.92f, 0.20f)
+                : new Color(1.0f, 0.32f, 0.28f);
+        }
+    }
+
     void OnDisable() {
+        GameEvents.OnGameEnded -= ShowEndOverlay;
         if (bossHpBar != null) {
             GameEvents.OnBossHpChanged     -= bossHpBar.OnBossHpChanged;
             GameEvents.OnBossPartDestroyed -= bossHpBar.OnPartDestroyed;

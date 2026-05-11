@@ -17,6 +17,8 @@ public static class GameEvents {
     public static event Action<float, float>    OnWallHpChanged;
     public static event Action                  OnWallDestroyed;
     public static event Action<MinionType, Vector2> OnSpawnMinion;
+    public static event Action<bool>                OnGameEnded;    // true = win
+    public static event Action<string, Vector3>    OnBossPartBreak;    // partId, world pos
 
     public static void RaiseBossHpChanged(float hp, float max)          => OnBossHpChanged?.Invoke(hp, max);
     public static void RaiseBossPartDestroyed(string partId)            => OnBossPartDestroyed?.Invoke(partId);
@@ -33,13 +35,15 @@ public static class GameEvents {
     public static void RaiseWallHpChanged(float hp, float max)          => OnWallHpChanged?.Invoke(hp, max);
     public static void RaiseWallDestroyed()                             => OnWallDestroyed?.Invoke();
     public static void RaiseSpawnMinion(MinionType type, Vector2 pos)   => OnSpawnMinion?.Invoke(type, pos);
+    public static void RaiseGameEnded(bool isWin)                       => OnGameEnded?.Invoke(isWin);
+    public static void RaiseBossPartBreak(string partId, Vector3 pos)  => OnBossPartBreak?.Invoke(partId, pos);
 
     public static void ClearAllListeners() {
         OnBossHpChanged = null; OnBossPartDestroyed = null; OnBossEnraged = null;
         OnBossDefeated = null; OnFireBullet = null; OnAmmoChanged = null;
         OnReloadStarted = null; OnReloadProgress = null; OnReloadComplete = null; OnMemberDied = null;
         OnBossShockwave = null; OnBossAttack = null; OnWallHpChanged = null;
-        OnWallDestroyed = null; OnSpawnMinion = null;
+        OnWallDestroyed = null; OnSpawnMinion = null; OnGameEnded = null; OnBossPartBreak = null;
     }
 }
 

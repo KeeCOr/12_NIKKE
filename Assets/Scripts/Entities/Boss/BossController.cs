@@ -88,6 +88,7 @@ public class BossController : MonoBehaviour {
         }
 
         GameEvents.OnBossPartDestroyed += OnPartDestroyed;
+        GameEvents.OnBossPartBreak     += OnPartBreak;
     }
 
     void Start() {
@@ -100,6 +101,7 @@ public class BossController : MonoBehaviour {
 
     void OnDestroy() {
         GameEvents.OnBossPartDestroyed -= OnPartDestroyed;
+        GameEvents.OnBossPartBreak     -= OnPartBreak;
     }
 
     private void HandleWallDestroyed() => _wallDestroyed = true;
@@ -118,14 +120,14 @@ public class BossController : MonoBehaviour {
             if (obstacle.HasValue) {
                 AttackObstacle(dt, obstacle.Value);
             } else if (!_wallDestroyed && transform.position.x > config.stopX) {
-                // Advance toward wall
-                transform.position += Vector3.left * EffectiveSpeed * dt;
+                // Advance toward wall along diagonal
+                AdvanceAlongDiagonal(dt);
             } else if (!_wallDestroyed) {
                 // At stopX — keep attacking wall
                 AttackWall(dt);
             } else {
                 // Wall is destroyed — advance past stopX toward defense line
-                transform.position += Vector3.left * EffectiveSpeed * dt;
+                AdvanceAlongDiagonal(dt);
             }
         }
 
@@ -144,6 +146,14 @@ public class BossController : MonoBehaviour {
                 GameEvents.RaiseBossShockwave(transform.position, config.shockwaveDamage);
             }
         }
+    }
+
+    // Move one frame along the start→stop diagonal, extrapolating past stopX when wall falls
+    private void AdvanceAlongDiagonal(float dt) {
+        float newX = transform.position.x - EffectiveSpeed * dt;
+        float t    = Mathf.InverseLerp(GameConfig.BOSS_START_X, GameConfig.BOSS_STOP_X, newX);
+        float newY = Mathf.LerpUnclamped(GameConfig.BOSS_START_Y, GameConfig.BOSS_STOP_Y, t);
+        transform.position = new Vector3(newX, newY, transform.position.z);
     }
 
     private float EffectiveSpeed {
@@ -191,14 +201,23 @@ public class BossController : MonoBehaviour {
     public float TakeDamage(string partId, float rawDmg, Vector3? hitPos = null) {
         if (!IsAlive) return 0f;
         if (!_parts.TryGetValue(partId, out var part)) return 0f;
-        if (!part.IsActive || part.IsDestroyed) return 0f;
+        if (!part.IsActive) return 0f;  // CORE inactive until CHEST destroyed — fully blocked
 
         part.ApplyHitDebuff(part.IsDestroyed);
 
         int destroyedCount = 0;
         foreach (var p in _parts.Values)
             if (p.IsDestroyed && p.PartId != "CORE") destroyedCount++;
-        float finalDmg = rawDmg * (1f + destroyedCount * 0.25f);
+
+        float finalDmg;
+        if (part.IsDestroyed) {
+            // Destroyed area: bullet passes through at reduced rate — still worth shooting
+            finalDmg = rawDmg * 0.70f;
+        } else {
+            // Intact part: damageMult is the armor coefficient (< 1 = resistant, > 1 = weak spot)
+            // Each already-destroyed part weakens the overall armor by 15%
+            finalDmg = rawDmg * part.DamageMult * (1f + destroyedCount * 0.15f);
+        }
 
         foreach (var pid in _vulnIds) {
             if (_parts.TryGetValue(pid, out var dp) && dp.DebuffTimer > 0f)
@@ -215,19 +234,18 @@ public class BossController : MonoBehaviour {
             }
         }
 
-        float dmgApplied = part.TakeDamage(finalDmg);
-        Hp = Mathf.Max(0f, Hp - dmgApplied);
+        part.TakeDamage(finalDmg);
+        Hp = Mathf.Max(0f, Hp - finalDmg);
         GameEvents.RaiseBossHpChanged(Hp, MaxHp);
 
         bool isCrit = finalDmg >= rawDmg * 1.25f || partId == "CORE";
         Vector3 numPos = hitPos ?? (part.transform.position + Vector3.up * 0.6f);
-        DamageNumberSystem.Instance?.Show(dmgApplied, isCrit, numPos);
+        DamageNumberSystem.Instance?.Show(finalDmg, isCrit, numPos);
 
-        // Brief white flash on boss body sprite
         if (bodyRenderer != null) StartCoroutine(BodyHitFlash());
 
         if (Hp <= 0f) Die();
-        return dmgApplied;
+        return finalDmg;
     }
 
     public void Enrage() {
@@ -243,6 +261,17 @@ public class BossController : MonoBehaviour {
     private void OnPartDestroyed(string partId) {
         if (partId == "CHEST" && _parts.TryGetValue("CORE", out var core))
             core.Activate();
+    }
+
+    private void OnPartBreak(string partId, Vector3 pos) {
+        if (!IsAlive) return;
+        const float bonusDmg = 100f;
+        Hp = Mathf.Max(0f, Hp - bonusDmg);
+        GameEvents.RaiseBossHpChanged(Hp, MaxHp);
+        VFXSystem.Instance?.ShowPartBreak(pos);
+        _cameraShaker?.Shake(0.45f, 0.016f);
+        DamageNumberSystem.Instance?.Show(bonusDmg, true, pos + Vector3.up * 0.5f);
+        if (Hp <= 0f) Die();
     }
 
     private void Die() {

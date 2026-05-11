@@ -9,4 +9,6 @@ public class MinionConfigSO : ScriptableObject {
     public float attackRange    = 0.4f;
     public float attackInterval = 1.5f;
     public float terrainDamage  = 15f;
+    // Half-height of rendered sprite — used to align feet to spawn Y instead of center
+    public float spriteHalfHeight = 0f;
 }

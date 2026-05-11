@@ -294,12 +294,15 @@
         <thead><tr><th>항목</th><th>값</th></tr></thead>
         <tbody>
           <tr><td>카메라 타입</td><td>2D Orthographic, Size 4.0</td></tr>
-          <tr><td>카메라 중심</td><td>(7.5, 2.5)</td></tr>
+          <tr><td>카메라 중심</td><td>(7.5, 3.0)</td></tr>
           <tr><td>화면 X 범위</td><td>0.39 ~ 14.61 (월드)</td></tr>
+          <tr><td>전장 방향</td><td>우측 상단 → 좌측 하단 (대각선 구도)</td></tr>
+          <tr><td>분대 위치</td><td>좌측 하단 Y = 0.70</td></tr>
           <tr><td>방어선 (DEFENSE_LINE)</td><td>X = 1.3</td></tr>
-          <tr><td>방벽 위치 (WALL_X)</td><td>X = 7.0, Y = 2.02</td></tr>
-          <tr><td>보스 시작 (BOSS_START_X)</td><td>X = 14.0</td></tr>
-          <tr><td>보스 정지 (BOSS_STOP_X)</td><td>X = 4.2</td></tr>
+          <tr><td>방벽 위치 (WALL)</td><td>X = 7.0, Y = 2.85</td></tr>
+          <tr><td>보스 시작</td><td>X = 14.0, Y = 5.50 (우측 상단)</td></tr>
+          <tr><td>보스 정지</td><td>X = 5.0, Y = 2.10 (중앙)</td></tr>
+          <tr><td>미니언 스폰</td><td>X = 12.5~13.5, Y = 4.5~5.5 (우측 상단)</td></tr>
           <tr><td>보스 Y</td><td>Y = 3.3 (지면 위)</td></tr>
           <tr><td>분대 Y</td><td>Y = 1.48</td></tr>
         </tbody>
@@ -409,13 +412,14 @@
         <div class="card-role">Assault Rifle (M249)</div>
         <div class="card-stat">
           HP <span>120</span>&nbsp;·&nbsp;
-          탄창 <span>40</span>&nbsp;·&nbsp;
-          데미지 <span>12</span><br>
-          발사간격 <span>0.08s</span>&nbsp;·&nbsp;
-          장전 <span>3.5s</span><br>
-          산탄 <span>8°</span>
+          탄창 <span>5</span>&nbsp;·&nbsp;
+          데미지 <span>15</span><br>
+          발사간격 <span>0.07s</span>&nbsp;·&nbsp;
+          장전(버스트 딜레이) <span>1.8s</span><br>
+          산탄 <span>8°</span>&nbsp;·&nbsp;
+          사정거리 <span>8.0wu</span>
         </div>
-        <div class="card-special">연사 집중 — 산탄 ÷1.3 (버스트 정확도)</div>
+        <div class="card-special">5연발 버스트 후 1.8s 딜레이 → 연사 집중 — 산탄 ÷1.3</div>
       </div>
       <div class="card">
         <div class="card-accent" style="background:#3ec96a"></div>
@@ -428,7 +432,8 @@
           발사간격 <span>0.90s</span>&nbsp;·&nbsp;
           장전 <span>2.5s</span><br>
           산탄 <span>20°</span>&nbsp;·&nbsp;
-          탄속 <span>800</span>
+          탄속 <span>800</span>&nbsp;·&nbsp;
+          사정거리 <span>3.5wu</span>
         </div>
         <div class="card-special">특수 없음 (None)</div>
       </div>
@@ -443,7 +448,8 @@
           발사간격 <span>2.50s</span>&nbsp;·&nbsp;
           장전 <span>3.0s</span><br>
           폭발 반경 <span>1.5</span>&nbsp;·&nbsp;
-          산탄 <span>5°</span>
+          산탄 <span>5°</span>&nbsp;·&nbsp;
+          사정거리 <span>11.0wu</span>
         </div>
         <div class="card-special">로켓 스플래시 — 폭발 반경 ×1.8</div>
       </div>
@@ -457,7 +463,8 @@
           데미지 <span>280</span><br>
           발사간격 <span>4.00s</span>&nbsp;·&nbsp;
           장전 <span>3.0s</span><br>
-          탄속 <span>3000</span>
+          탄속 <span>3000</span>&nbsp;·&nbsp;
+          사정거리 <span>9.0wu</span>
         </div>
         <div class="card-special">약점 마킹 — 표시된 부위 데미지 ×1.4</div>
       </div>
@@ -512,43 +519,43 @@
       <div class="part-card" style="border-top: 2px solid #ffd54f">
         <div class="part-name" style="color:#ffd54f">HEAD</div>
         <div class="part-hp" style="color:#ffd54f">600</div>
-        <div class="part-mult">데미지 배율 ×1.5</div>
-        <div class="part-effect">파괴 → 분노 조건 충족 시작</div>
+        <div class="part-mult">방어계수 ×0.50 (50% 차단)</div>
+        <div class="part-effect">파괴 → 분노 조건 충족 시작<br>파괴 후 관통 데미지 ×0.70</div>
       </div>
       <div class="part-card" style="border-top: 2px solid #ff5030">
         <div class="part-name" style="color:#ff5030">CHEST</div>
         <div class="part-hp" style="color:#ff5030">1,200</div>
-        <div class="part-mult">데미지 배율 ×1.0</div>
-        <div class="part-effect">파괴 → CORE 활성화<br>디버프 시 스턴 확률</div>
+        <div class="part-mult">방어계수 ×0.35 (65% 차단)</div>
+        <div class="part-effect">파괴 → CORE 활성화<br>디버프 시 스턴 확률<br>파괴 후 관통 데미지 ×0.70</div>
       </div>
       <div class="part-card" style="border-top: 2px solid #4a9eff">
         <div class="part-name" style="color:#4a9eff">ARM_L</div>
         <div class="part-hp" style="color:#4a9eff">400</div>
-        <div class="part-mult">데미지 배율 ×0.8</div>
-        <div class="part-effect">파괴 → 공격 간격 ×1.6</div>
+        <div class="part-mult">방어계수 ×0.55 (45% 차단)</div>
+        <div class="part-effect">파괴 → 공격 간격 ×1.6<br>파괴 후 관통 데미지 ×0.70</div>
       </div>
       <div class="part-card" style="border-top: 2px solid #4a9eff">
         <div class="part-name" style="color:#4a9eff">ARM_R</div>
         <div class="part-hp" style="color:#4a9eff">400</div>
-        <div class="part-mult">데미지 배율 ×0.8</div>
-        <div class="part-effect">파괴 → 공격 간격 ×1.6 (중첩)</div>
+        <div class="part-mult">방어계수 ×0.55 (45% 차단)</div>
+        <div class="part-effect">파괴 → 공격 간격 ×1.6 (중첩)<br>파괴 후 관통 데미지 ×0.70</div>
       </div>
       <div class="part-card" style="border-top: 2px solid #3ec96a">
         <div class="part-name" style="color:#3ec96a">LEG_L</div>
         <div class="part-hp" style="color:#3ec96a">350</div>
-        <div class="part-mult">데미지 배율 ×0.7</div>
-        <div class="part-effect">파괴 → 이동속도 ×0.65</div>
+        <div class="part-mult">방어계수 ×0.45 (55% 차단)</div>
+        <div class="part-effect">파괴 → 이동속도 ×0.65<br>파괴 후 관통 데미지 ×0.70</div>
       </div>
       <div class="part-card" style="border-top: 2px solid #3ec96a">
         <div class="part-name" style="color:#3ec96a">LEG_R</div>
         <div class="part-hp" style="color:#3ec96a">350</div>
-        <div class="part-mult">데미지 배율 ×0.7</div>
-        <div class="part-effect">파괴 → 이동속도 ×0.65 (중첩)</div>
+        <div class="part-mult">방어계수 ×0.45 (55% 차단)</div>
+        <div class="part-effect">파괴 → 이동속도 ×0.65 (중첩)<br>파괴 후 관통 데미지 ×0.70</div>
       </div>
       <div class="part-card" style="border-top: 2px solid #c84aff; opacity: .7">
         <div class="part-name" style="color:#c84aff">CORE</div>
         <div class="part-hp" style="color:#c84aff">800</div>
-        <div class="part-mult">데미지 배율 ×2.0</div>
+        <div class="part-mult">약점 계수 ×3.00 (300% 증폭)</div>
         <div class="part-effect">초기 비활성화<br>CHEST 파괴 시 등장</div>
       </div>
     </div>
@@ -556,10 +563,15 @@
     <h3>데미지 계산식</h3>
     <div class="flow">
       <code style="color:#e8eaf0; font-size:13px; line-height:2">
-        finalDmg = rawDmg × (1 + destroyedPartCount × 0.25)<br>
+        <span style="color:#ffd54f">// 부위 생존 시 (방어력 계수 적용)</span><br>
+        finalDmg = rawDmg × part.damageMult × (1 + destroyedPartCount × 0.15)<br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; × (HEAD/CORE 디버프 시 1.15 또는 1.30)<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; × (부위 특수 배율)<br>
-        <span style="color:#8892a8">// destroyedPartCount = CORE 제외 파괴된 부위 수</span>
+        <br>
+        <span style="color:#ffd54f">// 부위 파괴 후 (관통 데미지)</span><br>
+        finalDmg = rawDmg × 0.70<br>
+        <br>
+        <span style="color:#8892a8">// destroyedPartCount = CORE 제외 파괴된 부위 수</span><br>
+        <span style="color:#8892a8">// 파괴된 부위도 콜라이더 유지 → 계속 공격 가능</span>
       </code>
     </div>
 

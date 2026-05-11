@@ -24,43 +24,43 @@ MonoBehaviour:
   parts:
   - id: HEAD
     hp: 600
-    damageMult: 1.5
+    damageMult: 0.5
     offset: {x: 1.5, y: 0.8}
     size: {x: 1.2, y: 0.9}
     activeOnStart: 1
   - id: CHEST
     hp: 1200
-    damageMult: 1
+    damageMult: 0.35
     offset: {x: 0, y: 0}
     size: {x: 2.2, y: 1.5}
     activeOnStart: 1
   - id: ARM_L
     hp: 400
-    damageMult: 0.8
+    damageMult: 0.55
     offset: {x: -2.2, y: 0.3}
     size: {x: 1, y: 1.4}
     activeOnStart: 1
   - id: ARM_R
     hp: 400
-    damageMult: 0.8
+    damageMult: 0.55
     offset: {x: 2.2, y: 0.3}
     size: {x: 1, y: 1.4}
     activeOnStart: 1
   - id: LEG_L
     hp: 350
-    damageMult: 0.7
+    damageMult: 0.45
     offset: {x: -1.5, y: -0.9}
     size: {x: 0.9, y: 1}
     activeOnStart: 1
   - id: LEG_R
     hp: 350
-    damageMult: 0.7
+    damageMult: 0.45
     offset: {x: 1.5, y: -0.9}
     size: {x: 0.9, y: 1}
     activeOnStart: 1
   - id: CORE
     hp: 800
-    damageMult: 2
+    damageMult: 3
     offset: {x: 0, y: 0}
     size: {x: 1, y: 0.9}
     activeOnStart: 0

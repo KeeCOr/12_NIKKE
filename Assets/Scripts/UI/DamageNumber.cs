@@ -1,13 +1,16 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DamageNumber : MonoBehaviour {
-    private TextMesh _mesh;
-    private Action   _onDone;
+    private Text    _text;
+    private Action  _onDone;
+    private Vector3 _baseScale;
 
     void Awake() {
-        _mesh = GetComponent<TextMesh>();
+        _text      = GetComponentInChildren<Text>();
+        _baseScale = transform.localScale;
     }
 
     public void Play(float damage, bool isCrit, Vector3 worldPos, Action onDone) {
@@ -17,15 +20,13 @@ public class DamageNumber : MonoBehaviour {
 
         int rounded = Mathf.RoundToInt(damage);
         if (isCrit) {
-            _mesh.text      = $"{rounded}!";
-            _mesh.fontSize  = 42;
-            _mesh.color     = new Color(1f, 0.22f, 0.04f, 1f);
-            _mesh.characterSize = 0.07f;
+            _text.text     = $"{rounded}!";
+            _text.fontSize = 38;
+            _text.color    = new Color(1f, 0.22f, 0.04f, 1f);
         } else {
-            _mesh.text      = rounded.ToString();
-            _mesh.fontSize  = 30;
-            _mesh.color     = new Color(1f, 0.95f, 0.65f, 1f);
-            _mesh.characterSize = 0.06f;
+            _text.text     = rounded.ToString();
+            _text.fontSize = 28;
+            _text.color    = new Color(1f, 0.95f, 0.65f, 1f);
         }
 
         StopAllCoroutines();
@@ -33,17 +34,17 @@ public class DamageNumber : MonoBehaviour {
     }
 
     private IEnumerator Animate(bool isCrit) {
-        float dur      = isCrit ? 1.0f : 0.70f;
-        float riseAmt  = isCrit ? 1.6f : 1.1f;
-        Vector3 start  = transform.position;
-        Color   col    = _mesh.color;
-        float   t      = 0f;
+        float   dur      = isCrit ? 1.0f : 0.70f;
+        float   riseAmt  = isCrit ? 1.6f : 1.1f;
+        Vector3 start    = transform.position;
+        Color   col      = _text.color;
+        float   t        = 0f;
 
         // brief pop scale for crits
         if (isCrit) {
-            transform.localScale = new Vector3(1.4f, 1.4f, 1f);
+            transform.localScale = _baseScale * 1.4f;
             yield return null;
-            transform.localScale = Vector3.one;
+            transform.localScale = _baseScale;
         }
 
         while (t < dur) {
@@ -51,7 +52,7 @@ public class DamageNumber : MonoBehaviour {
             float frac = t / dur;
             transform.position = start + Vector3.up * (riseAmt * frac);
             col.a = Mathf.Clamp01(1f - frac * frac);   // quadratic fade
-            _mesh.color = col;
+            _text.color = col;
             yield return null;
         }
 

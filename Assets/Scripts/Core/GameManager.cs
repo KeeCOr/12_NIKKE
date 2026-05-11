@@ -70,6 +70,7 @@ public class GameManager : MonoBehaviour {
     private System.Collections.IEnumerator EndGame(GameState result, float delay) {
         _endingGame = true;
         State = result;
+        GameEvents.RaiseGameEnded(result == GameState.Win);
         yield return new WaitForSeconds(delay);
         SceneManager.LoadScene(resultSceneName);
     }

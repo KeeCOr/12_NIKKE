@@ -31,17 +31,29 @@ public class DamageNumberSystem : MonoBehaviour {
         var go = new GameObject("DmgNum");
         go.transform.SetParent(transform);
 
-        var tm = go.AddComponent<TextMesh>();
-        tm.anchor        = TextAnchor.MiddleCenter;
-        tm.alignment     = TextAlignment.Center;
-        tm.fontSize      = 30;
-        tm.characterSize = 0.06f;
-        tm.font          = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        // WorldSpace canvas — reliable rendering in Unity 2022.3+
+        var canvas = go.AddComponent<Canvas>();
+        canvas.renderMode       = RenderMode.WorldSpace;
+        canvas.sortingLayerName = "Default";
+        canvas.sortingOrder     = 30;
 
-        // Render in front of everything else
-        var mr = go.GetComponent<MeshRenderer>();
-        mr.sortingLayerName = "Default";
-        mr.sortingOrder     = 30;
+        var rt       = go.GetComponent<RectTransform>();
+        rt.sizeDelta = new Vector2(120f, 40f);
+        rt.localScale = Vector3.one * 0.018f;   // 120 × 0.018 ≈ 2.2 world units wide
+
+        var textGo = new GameObject("T");
+        textGo.transform.SetParent(go.transform, false);
+        var trt       = textGo.AddComponent<RectTransform>();
+        trt.anchorMin = Vector2.zero;
+        trt.anchorMax = Vector2.one;
+        trt.offsetMin = trt.offsetMax = Vector2.zero;
+
+        var txt       = textGo.AddComponent<UnityEngine.UI.Text>();
+        txt.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        txt.fontSize  = 28;
+        txt.fontStyle = FontStyle.Bold;
+        txt.alignment = TextAnchor.MiddleCenter;
+        txt.color     = Color.white;
 
         go.SetActive(false);
         return go.AddComponent<DamageNumber>();
