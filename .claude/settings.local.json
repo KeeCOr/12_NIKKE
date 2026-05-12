@@ -13,7 +13,9 @@
       "Bash(python -c \":*)",
       "Bash(powershell -Command \"\nAdd-Type -AssemblyName System.Drawing\n@\\('Assets/Sprites/Background/stage_1.png','Assets/Sprites/Enemy/B_1_NM.png','Assets/Sprites/Enemy/M_1_Runner.png','Assets/Sprites/Enemy/M_2_Leader.png','Assets/Sprites/Enemy/M_3_Shooter.png','Assets/Sprites/Character/character \\(1\\).png','Assets/Sprites/Character/character \\(2\\).png','Assets/Sprites/Object/Barricade_1.png'\\) | ForEach-Object {\n    try {\n        \\\\$img = [System.Drawing.Image]::FromFile\\(\\(Resolve-Path \\\\$_\\).Path\\)\n        '{0,-30} {1} x {2}' -f \\(Split-Path \\\\$_ -Leaf\\), \\\\$img.Width, \\\\$img.Height\n        \\\\$img.Dispose\\(\\)\n    } catch { '{0,-30} ERROR' -f \\\\$_ }\n}\")",
       "Read(//c/Program Files/Unity/Hub/Editor/**)",
-      "Read(//c/Program Files/Unity/**)"
+      "Read(//c/Program Files/Unity/**)",
+      "Bash(cmd.exe /c \"rename C:\\\\Development\\\\SquadVsMonster 12_NIKKE\")",
+      "Bash(powershell.exe -Command \"Rename-Item -Path 'C:\\\\Development\\\\SquadVsMonster' -NewName '12_NIKKE'\")"
     ]
   }
 }
