@@ -32,6 +32,7 @@ public static class SceneBuilder {
         var bossConfig   = MakeBossConfig();
         var squadCfgs    = MakeSquadConfigs();
         var mapConfig    = MakeMapConfig();
+        MakeUpgradeCards();
         AssetDatabase.SaveAssets();
 
         var bulletPrefab    = MakeBulletPrefab(white);
@@ -220,7 +221,7 @@ public static class SceneBuilder {
         for (int i = 0; i < 5; i++) {
             var go = new GameObject(names[i]);
             go.transform.SetParent(squadParent.transform);
-            go.transform.position   = new Vector3(GameConfig.SQUAD_SLOT_X[i], GameConfig.SQUAD_Y, 0f);
+            go.transform.position   = new Vector3(GameConfig.SQUAD_SLOT_X[i], GameConfig.SQUAD_SLOT_Y[i], 0f);
             go.transform.localScale = new Vector3(1.04f, 1.40f, 1f);  // fallback size (2× scale)
             var sr  = go.AddComponent<SpriteRenderer>();
             var csp = charSprites[i];
@@ -884,10 +885,77 @@ public static class SceneBuilder {
         return result;
     }
 
+    // ─── Upgrade Card Assets ──────────────────────────────────────────────────
+    static void MakeUpgradeCards() {
+        // Per-character damage boost cards
+        string[]  ids      = { "alpha",  "bravo",  "charlie",  "delta",  "echo"   };
+        string[]  names    = { "Alpha",  "Bravo",  "Charlie",  "Delta",  "Echo"   };
+        string[]  weapons  = { "저격소총", "돌격소총", "산탄총",    "로켓",   "DMR"    };
+
+        for (int i = 0; i < ids.Length; i++) {
+            // Damage ×1.2 card
+            var dmg = LoadOrCreate<UpgradeCardSO>($"{CONFIGS}/UpgradeCard_{names[i]}_Damage.asset");
+            dmg.title        = $"{names[i]} 집중 훈련";
+            dmg.description  = $"{names[i]}의 {weapons[i]} 공격력 +20%";
+            dmg.targetType   = UpgradeTargetType.SpecificMember;
+            dmg.targetId     = ids[i];
+            dmg.stat         = UpgradeStat.Damage;
+            dmg.value        = 0.2f;
+            dmg.isMultiplier = true;
+            dmg.maxStacks    = 5;
+            EditorUtility.SetDirty(dmg);
+        }
+
+        // Per-character secondary cards
+        (string id, string title, string desc, UpgradeStat stat, float val, bool mult)[] secondary = {
+            ("alpha",   "Alpha 장전 훈련",   "Alpha 재장전 속도 +15%",   UpgradeStat.ReloadSpeed, 0.85f, true),
+            ("bravo",   "Bravo 탄창 확장",   "Bravo 탄창 +5발",          UpgradeStat.MagazineSize, 5f,   false),
+            ("charlie", "Charlie 체력 증강", "Charlie 최대 HP +20",       UpgradeStat.Hp,          20f,  false),
+            ("delta",   "Delta 재장전",       "Delta 재장전 속도 +10%",   UpgradeStat.ReloadSpeed, 0.90f, true),
+            ("echo",    "Echo 저격 리듬",     "Echo 발사 속도 +15%",      UpgradeStat.FireRate,    0.85f, true),
+        };
+        foreach (var (id, title, desc, stat, val, mult) in secondary) {
+            string capId = char.ToUpper(id[0]) + id.Substring(1);
+            var card = LoadOrCreate<UpgradeCardSO>($"{CONFIGS}/UpgradeCard_{capId}_Secondary.asset");
+            card.title        = title;
+            card.description  = desc;
+            card.targetType   = UpgradeTargetType.SpecificMember;
+            card.targetId     = id;
+            card.stat         = stat;
+            card.value        = val;
+            card.isMultiplier = mult;
+            card.maxStacks    = 3;
+            EditorUtility.SetDirty(card);
+        }
+
+        // Global cards
+        (string title, string desc, UpgradeStat stat, float val, bool mult)[] globals = {
+            ("폭격 보급",   "공중 폭격 충전 +1",    UpgradeStat.BombCharge,  1f,  false),
+            ("바리케이드 증설", "바리케이드 +1",    UpgradeStat.Barricade,   1f,  false),
+            ("분대 강화",   "전원 최대 HP +15",     UpgradeStat.Hp,          15f, false),
+        };
+        foreach (var (title, desc, stat, val, mult) in globals) {
+            string key = title.Replace(" ", "_");
+            var card = LoadOrCreate<UpgradeCardSO>($"{CONFIGS}/UpgradeCard_Global_{key}.asset");
+            card.title        = title;
+            card.description  = desc;
+            card.targetType   = UpgradeTargetType.Global;
+            card.targetId     = "";
+            card.stat         = stat;
+            card.value        = val;
+            card.isMultiplier = mult;
+            card.maxStacks    = 3;
+            EditorUtility.SetDirty(card);
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log("[SceneBuilder] Upgrade cards created in " + CONFIGS);
+    }
+
     static MapConfigSO MakeMapConfig() {
         var cfg = LoadOrCreate<MapConfigSO>(CONFIGS + "/MapConfig.asset");
         cfg.destX = GameConfig.DEFENSE_LINE;
-        cfg.destY = GameConfig.SQUAD_Y;
+        cfg.destY = GameConfig.SQUAD_SLOT_Y[0];   // minions target the frontmost slot
         // 3 spawn paths along the diagonal (upper-right → lower-left)
         // Only reset if zones are empty or unset — preserves manual edits
         if (cfg.spawnZones == null || cfg.spawnZones.Length == 0) {

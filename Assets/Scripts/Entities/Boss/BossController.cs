@@ -24,6 +24,7 @@ public class BossController : MonoBehaviour {
     private bool  _wallDestroyed;
     private TerrainManager _terrain;
     private CameraShaker   _cameraShaker;
+    private BossWeakspot   _activeWeakspot;
 
     private static readonly string[] _legIds  = { "LEG_L", "LEG_R" };
     private static readonly string[] _armIds  = { "ARM_L", "ARM_R" };
@@ -115,6 +116,8 @@ public class BossController : MonoBehaviour {
         if (_stunTimer > 0f) { _stunTimer -= dt; return; }
         if (_stunCooldown > 0f) _stunCooldown -= dt;
 
+        UpdatePerspectiveScale();
+
         if (State == BossState.Walking || State == BossState.Enraged) {
             var obstacle = _terrain?.GetRoadBlockAhead(transform.position.x);
             if (obstacle.HasValue) {
@@ -148,11 +151,13 @@ public class BossController : MonoBehaviour {
         }
     }
 
-    // Move one frame along the start→stop diagonal, extrapolating past stopX when wall falls
+    // Move one frame along the start→stop diagonal, extrapolating past stopX when wall falls.
+    // A dual-sine oscillation is added to Y so bullets must track the boss rather than fire blindly.
     private void AdvanceAlongDiagonal(float dt) {
         float newX = transform.position.x - EffectiveSpeed * dt;
         float t    = Mathf.InverseLerp(GameConfig.BOSS_START_X, GameConfig.BOSS_STOP_X, newX);
         float newY = Mathf.LerpUnclamped(GameConfig.BOSS_START_Y, GameConfig.BOSS_STOP_Y, t);
+        newY += Mathf.Sin(Time.time * 2.3f) * 0.18f + Mathf.Sin(Time.time * 0.7f) * 0.10f;
         transform.position = new Vector3(newX, newY, transform.position.z);
     }
 
@@ -203,7 +208,8 @@ public class BossController : MonoBehaviour {
         if (!_parts.TryGetValue(partId, out var part)) return 0f;
         if (!part.IsActive) return 0f;  // CORE inactive until CHEST destroyed — fully blocked
 
-        part.ApplyHitDebuff(part.IsDestroyed);
+        // Intact parts apply debuff on every hit; destroyed parts manage their own threshold
+        if (!part.IsDestroyed) part.ApplyHitDebuff(false);
 
         int destroyedCount = 0;
         foreach (var p in _parts.Values)
@@ -261,6 +267,37 @@ public class BossController : MonoBehaviour {
     private void OnPartDestroyed(string partId) {
         if (partId == "CHEST" && _parts.TryGetValue("CORE", out var core))
             core.Activate();
+
+        // Spawn a temporary weakspot at a random offset from the boss body
+        SpawnWeakspot();
+    }
+
+    private void SpawnWeakspot() {
+        if (_activeWeakspot != null)
+            Destroy(_activeWeakspot.gameObject);
+
+        float ox = Random.Range(-0.8f, 0.8f);
+        float oy = Random.Range(-0.6f, 0.6f);
+        var worldPos = transform.position + new Vector3(ox, oy, -0.15f);
+        _activeWeakspot = BossWeakspot.Spawn(this, worldPos);
+    }
+
+    public void ApplyWeakspotBonus(float bonusDmg, Vector3 pos) {
+        if (!IsAlive) return;
+        Hp = Mathf.Max(0f, Hp - bonusDmg);
+        GameEvents.RaiseBossHpChanged(Hp, MaxHp);
+        DamageNumberSystem.Instance?.Show(bonusDmg, true, pos + Vector3.up * 0.5f);
+        _cameraShaker?.Shake(0.35f, 0.013f);
+        if (Hp <= 0f) Die();
+    }
+
+    // Perspective scale: boss appears smaller when far (high X) and larger when close (low X)
+    private void UpdatePerspectiveScale() {
+        float t = Mathf.Clamp01(
+            (GameConfig.BOSS_START_X - transform.position.x) /
+            (GameConfig.BOSS_START_X - GameConfig.BOSS_STOP_X));
+        float s = Mathf.Lerp(0.55f, 1.0f, t);
+        transform.localScale = new Vector3(s, s, 1f);
     }
 
     private void OnPartBreak(string partId, Vector3 pos) {

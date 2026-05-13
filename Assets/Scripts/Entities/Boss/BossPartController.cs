@@ -17,7 +17,9 @@ public class BossPartController : MonoBehaviour {
     private Color           _activeColor;
 
     private float _breakAccum;
-    private const float BREAK_THRESHOLD = 150f;  // 파괴 부위에 누적 이 수치 도달 시 브레이크 연출
+    private float _debuffAccum;
+    private const float BREAK_THRESHOLD  = 150f;  // 파괴 부위 누적 데미지: 브레이크 연출
+    private const float DEBUFF_THRESHOLD = 60f;   // 파괴 부위 누적 데미지: 디버프 발동
 
     public void Initialize(BossPartConfig cfg) {
         PartId     = cfg.id;
@@ -62,7 +64,12 @@ public class BossPartController : MonoBehaviour {
         VFXSystem.Instance?.ShowHit(transform.position, _activeColor);
 
         if (IsDestroyed) {
-            _breakAccum += amount;
+            _breakAccum  += amount;
+            _debuffAccum += amount;
+            if (_debuffAccum >= DEBUFF_THRESHOLD) {
+                _debuffAccum = 0f;
+                ApplyHitDebuff(true);  // strong debuff fires only after threshold
+            }
             if (_breakAccum >= BREAK_THRESHOLD) {
                 _breakAccum = 0f;
                 GameEvents.RaiseBossPartBreak(PartId, transform.position);

@@ -63,9 +63,11 @@ public class SquadMemberController : MonoBehaviour {
         float   angle  = Mathf.Atan2(aimPos.y - muzzle.y, aimPos.x - muzzle.x);
         float   dist   = Vector2.Distance(muzzle, aimPos);
 
-        // Don't fire if target is beyond max effective range (sniper has maxRange=0 = unlimited)
-        if (config.weapon.maxRange > 0f && dist > config.weapon.maxRange)
-            return;
+        // Clamp to effective max range (0 = use global default, so every weapon has a limit)
+        float effectiveMaxRange = config.weapon.maxRange > 0f
+            ? config.weapon.maxRange
+            : GameConfig.DEFAULT_MAX_RANGE;
+        if (dist > effectiveMaxRange) return;
 
         float dmg             = config.weapon.damage;
         float effectiveSpread = config.weapon.spread;
@@ -112,7 +114,7 @@ public class SquadMemberController : MonoBehaviour {
             pellets      = config.weapon.pellets,
             spread       = effectiveSpread,
             targetPartId = _aim.TargetPartId,
-            maxRange     = config.weapon.maxRange
+            maxRange     = effectiveMaxRange
         });
 
         CurrentAmmo--;

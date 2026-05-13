@@ -2,7 +2,11 @@ using UnityEngine;
 using UnityEngine.Pool;
 
 public class Bullet : MonoBehaviour {
-    public IObjectPool<Bullet> Pool { get; set; }
+    public IObjectPool<Bullet> Pool   { get; set; }
+    public float               Damage => _damage;
+
+    /// <summary>Remove this bullet from the scene (called by external systems such as BossWeakspot).</summary>
+    public void Consume() => ReturnToPool();
 
     private float _speed;
     private float _damage;

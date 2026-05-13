@@ -23,6 +23,21 @@ public class AimController : MonoBehaviour {
 
     private static Sprite _crosshairSprite;
 
+    // Cached color states for in-range vs out-of-range
+    private Gradient _inRangeGrad;
+    private Gradient _outOfRangeGrad;
+    private Color    _inRangeCrossColor;
+    private Color    _outOfRangeCrossColor;
+    private bool     _wasOutOfRange;
+
+    // Base crosshair scale (world units) — multiplied by boss perspective scale each frame
+    private float _crosshairBaseScale;
+    private float _lineBaseStartWidth;
+    private float _lineBaseEndWidth;
+
+    private float EffectiveMaxRange => (_config != null && _config.weapon.maxRange > 0f)
+        ? _config.weapon.maxRange : GameConfig.DEFAULT_MAX_RANGE;
+
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     void Start() {
@@ -58,6 +73,29 @@ public class AimController : MonoBehaviour {
     private void BuildAimVisuals() {
         Color col = _config != null ? _config.color : Color.white;
 
+        // Pre-build both colour states (in-range = character colour, out-of-range = greyscale)
+        float lum = col.r * 0.299f + col.g * 0.587f + col.b * 0.114f;
+        Color gray = new Color(lum, lum, lum, 1f);
+
+        var alphas = new[] {
+            new GradientAlphaKey(0.85f, 0f),
+            new GradientAlphaKey(0.50f, 0.6f),
+            new GradientAlphaKey(0.30f, 1f)
+        };
+        _inRangeGrad = new Gradient();
+        _inRangeGrad.SetKeys(
+            new[] { new GradientColorKey(col,  0f), new GradientColorKey(col,  1f) }, alphas);
+        _outOfRangeGrad = new Gradient();
+        _outOfRangeGrad.SetKeys(
+            new[] { new GradientColorKey(gray, 0f), new GradientColorKey(gray, 1f) }, alphas);
+
+        _inRangeCrossColor = new Color(
+            Mathf.Min(1f, col.r * 1.3f + 0.2f),
+            Mathf.Min(1f, col.g * 1.3f + 0.2f),
+            Mathf.Min(1f, col.b * 1.3f + 0.2f), 1.0f);
+        float gb = Mathf.Min(1f, lum * 1.3f + 0.2f);
+        _outOfRangeCrossColor = new Color(gb, gb, gb, 1.0f);
+
         // Scene-root GO so transform scale doesn't distort line width or crosshair size
         _indicatorRoot = new GameObject($"AimIndicator_{name}");
 
@@ -69,38 +107,31 @@ public class AimController : MonoBehaviour {
                      : _config.weapon.bulletType == BulletType.Shotgun ? 1.50f
                      : _config.weapon.spread > 5f                      ? 1.10f
                      :                                                    0.80f;
-        _aimLine.startWidth       = 0.065f * wScale;
-        _aimLine.endWidth         = 0.022f * wScale;
+        _lineBaseStartWidth       = 0.065f * wScale;
+        _lineBaseEndWidth         = 0.022f * wScale;
+        _aimLine.startWidth       = _lineBaseStartWidth;
+        _aimLine.endWidth         = _lineBaseEndWidth;
         _aimLine.sortingLayerName = "Default";
         _aimLine.sortingOrder     = 12;
         _aimLine.material         = new Material(Shader.Find("Sprites/Default"));
-
-        var grad = new Gradient();
-        grad.SetKeys(
-            new[] { new GradientColorKey(col, 0f), new GradientColorKey(col, 1f) },
-            new[] { new GradientAlphaKey(0.85f, 0f), new GradientAlphaKey(0.50f, 0.6f), new GradientAlphaKey(0.30f, 1f) }
-        );
-        _aimLine.colorGradient = grad;
-        _aimLine.enabled       = false;
+        _aimLine.colorGradient    = _inRangeGrad;
+        _aimLine.enabled          = false;
 
         // ── Crosshair ring at target ──────────────────────────────────────────
         var cgo = new GameObject("Crosshair");
         cgo.transform.SetParent(_indicatorRoot.transform, false);
-        float chScale = _config.weapon.bulletType == BulletType.Rocket  ? 0.60f
-                      : _config.weapon.bulletType == BulletType.Shotgun ? 0.55f
-                      : _config.weapon.spread > 5f                      ? 0.45f
-                      :                                                    0.38f;
-        cgo.transform.localScale = new Vector3(chScale, chScale, 1f);
+        _crosshairBaseScale = _config.weapon.bulletType == BulletType.Rocket  ? 0.60f
+                           : _config.weapon.bulletType == BulletType.Shotgun ? 0.55f
+                           : _config.weapon.spread > 5f                      ? 0.45f
+                           :                                                    0.38f;
+        cgo.transform.localScale = new Vector3(_crosshairBaseScale, _crosshairBaseScale, 1f);
 
-        _crosshair                   = cgo.AddComponent<SpriteRenderer>();
-        _crosshair.sprite            = BuildCrosshairSprite();
-        _crosshair.color             = new Color(
-            Mathf.Min(1f, col.r * 1.3f + 0.2f),
-            Mathf.Min(1f, col.g * 1.3f + 0.2f),
-            Mathf.Min(1f, col.b * 1.3f + 0.2f), 1.0f);  // brighter than the line
-        _crosshair.sortingLayerName  = "Default";
-        _crosshair.sortingOrder      = 12;
-        _crosshair.enabled           = false;
+        _crosshair                  = cgo.AddComponent<SpriteRenderer>();
+        _crosshair.sprite           = BuildCrosshairSprite();
+        _crosshair.color            = _inRangeCrossColor;
+        _crosshair.sortingLayerName = "Default";
+        _crosshair.sortingOrder     = 12;
+        _crosshair.enabled          = false;
     }
 
     private void UpdateAimVisuals() {
@@ -124,13 +155,32 @@ public class AimController : MonoBehaviour {
             0f);
         var target = new Vector3(AimPosition.x, AimPosition.y, 0f);
 
+        // Switch to greyscale when target is out of effective range
+        bool outOfRange = Vector2.Distance(new Vector2(muzzle.x, muzzle.y), AimPosition) > EffectiveMaxRange;
+        if (outOfRange != _wasOutOfRange) {
+            _wasOutOfRange = outOfRange;
+            if (_aimLine   != null) _aimLine.colorGradient = outOfRange ? _outOfRangeGrad      : _inRangeGrad;
+            if (_crosshair != null) _crosshair.color       = outOfRange ? _outOfRangeCrossColor : _inRangeCrossColor;
+        }
+
+        // Scale aim indicator with boss perspective scale so far targets look smaller
+        float bossScale = (_boss != null) ? _boss.transform.localScale.x : 1f;
+        if (_crosshair != null) {
+            float s = _crosshairBaseScale * bossScale;
+            _crosshair.transform.localScale = new Vector3(s, s, 1f);
+        }
+        if (_aimLine != null) {
+            _aimLine.startWidth = _lineBaseStartWidth * bossScale;
+            _aimLine.endWidth   = _lineBaseEndWidth   * bossScale;
+        }
+
         if (_aimLine != null) {
             _aimLine.enabled = true;
             _aimLine.SetPosition(0, muzzle);
             _aimLine.SetPosition(1, target);
         }
         if (_crosshair != null) {
-            _crosshair.enabled          = true;
+            _crosshair.enabled            = true;
             _crosshair.transform.position = target;
         }
     }

@@ -3,7 +3,12 @@ using UnityEngine;
 public static class GameConfig {
     // Squad positioned at lower-left
     public static readonly float[] SQUAD_SLOT_X = { 0.68f, 1.28f, 1.88f, 2.48f, 3.08f };
-    public const float SQUAD_Y       = 0.70f;
+    // Per-slot Y follows the battlefield diagonal perspective (right = further back = higher Y)
+    public static readonly float[] SQUAD_SLOT_Y = { 0.70f, 0.93f, 1.15f, 1.38f, 1.61f };
+    public const float SQUAD_Y       = 0.70f;   // kept for backwards-compat; prefer SQUAD_SLOT_Y
+
+    // Default maximum range for weapons that have maxRange=0 (previously "unlimited")
+    public const float DEFAULT_MAX_RANGE = 13f;
 
     // Boss moves diagonally from upper-right (START) toward lower-left (STOP)
     public const float BOSS_START_X  = 14.0f;
