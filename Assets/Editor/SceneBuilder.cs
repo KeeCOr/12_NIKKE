@@ -164,9 +164,9 @@ public static class SceneBuilder {
 
         var barSr = new SpriteRenderer[3];
         var barSp = new Sprite[3]; // damage sprites (healthy / damaged / critical)
-        float[] barX = { 3.8f, 5.0f, 6.2f };
+        float[] barX = { 3.2f, 5.0f, 6.8f };
         // Y values follow the boss diagonal path (upper-right → lower-left)
-        float[] barY = { 1.64f, 2.10f, 2.55f };
+        float[] barY = { 1.34f, 2.10f, 2.86f };
         for (int i = 0; i < 3; i++) {
             // barSprite is landscape (2528×1696) — stretch to portrait so it reads as a tall barrier
             var barGo = MkSprite($"Barricade{i}", terrainParent.transform,

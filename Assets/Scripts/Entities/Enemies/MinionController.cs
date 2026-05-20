@@ -103,7 +103,7 @@ public class MinionController : MonoBehaviour {
             }
             if (_spitterTarget != null) { pos = _spitterTarget.transform.position; return true; }
         }
-        var barricade = _terrain?.GetAliveBarricade();
+        var barricade = _terrain?.GetClosestAliveBarricade(transform.position);
         if (barricade.HasValue) { pos = barricade.Value; return true; }
         var wall = _terrain?.GetWallTarget();
         if (wall.HasValue) { pos = wall.Value; return true; }

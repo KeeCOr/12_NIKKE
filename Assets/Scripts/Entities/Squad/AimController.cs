@@ -12,6 +12,8 @@ public class AimController : MonoBehaviour {
     private BossPartController _userTargetPart;
     private MinionController   _userTargetMinion;
     private Vector2            _desiredAimPos;
+    private Vector2            _freeAimPos;
+    private bool               _hasFreeAimTarget;
 
     private SquadMemberController _owner;
     private SpriteRenderer        _bodySr;
@@ -207,6 +209,12 @@ public class AimController : MonoBehaviour {
             TargetPartId   = null;
             return;
         }
+        if (_hasFreeAimTarget) {
+            HasTarget      = true;
+            _desiredAimPos = _freeAimPos;
+            TargetPartId   = null;
+            return;
+        }
         if (_boss != null && _boss.IsAlive) {
             if (_config.aimPriority != null) {
                 foreach (var pid in _config.aimPriority) {
@@ -238,9 +246,34 @@ public class AimController : MonoBehaviour {
             AimPosition = Vector2.MoveTowards(AimPosition, _desiredAimPos, 5f * Time.deltaTime);
     }
 
-    public void SetUserTargetPart(BossPartController part)   { _userTargetPart = part; _userTargetMinion = null; }
-    public void SetUserTargetMinion(MinionController minion) { _userTargetMinion = minion; _userTargetPart = null; }
-    public void ClearUserTarget() { _userTargetPart = null; _userTargetMinion = null; }
+    public void SetUserTargetPart(BossPartController part) {
+        _userTargetPart = part;
+        _userTargetMinion = null;
+        _hasFreeAimTarget = false;
+    }
+
+    public void SetUserTargetMinion(MinionController minion) {
+        _userTargetMinion = minion;
+        _userTargetPart = null;
+        _hasFreeAimTarget = false;
+    }
+
+    public void SetFreeAimTarget(Vector2 position) {
+        _userTargetPart = null;
+        _userTargetMinion = null;
+        _hasFreeAimTarget = true;
+        _freeAimPos = position;
+        _desiredAimPos = position;
+        AimPosition = position;
+        HasTarget = true;
+        TargetPartId = null;
+    }
+
+    public void ClearUserTarget() {
+        _userTargetPart = null;
+        _userTargetMinion = null;
+        _hasFreeAimTarget = false;
+    }
 
     // ── Crosshair sprite (ring, created once) ─────────────────────────────────
 

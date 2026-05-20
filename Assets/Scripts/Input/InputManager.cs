@@ -117,9 +117,9 @@ public class InputManager : MonoBehaviour {
                         break;
                     }
                 }
-                // Dragging over empty space — release snap so aim follows the drag freely
+                // Dragging over empty space keeps a visible free-aim marker, even out of range.
                 if (!hitTarget)
-                    aimControllers[_selectedMember].ClearUserTarget();
+                    aimControllers[_selectedMember].SetFreeAimTarget(worldPos);
             }
         }
 
