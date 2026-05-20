@@ -19,6 +19,7 @@ public class MinionController : MonoBehaviour {
     private SquadMemberController _spitterTarget;
     private HitFlash  _hitFlash;
     private Color     _bodyColor;
+    private int       _preferredBarricadeIndex = -1;
 
     void Start() {
         if (config == null) {
@@ -31,6 +32,13 @@ public class MinionController : MonoBehaviour {
         _terrain   = FindObjectOfType<TerrainManager>();
         _squad     = FindObjectsOfType<SquadMemberController>();
         _hitFlash  = GetComponent<HitFlash>();
+        Vector2 lanePos = transform.position;
+        lanePos.y -= config.spriteHalfHeight;
+        _preferredBarricadeIndex = _preferredBarricadeIndex >= 0
+            ? _preferredBarricadeIndex
+            : mapConfig != null
+            ? mapConfig.GetNearestSpawnLaneIndex(lanePos)
+            : -1;
         var sr     = GetComponent<SpriteRenderer>();
         _bodyColor = sr != null ? sr.color : Color.white;
     }
@@ -103,7 +111,7 @@ public class MinionController : MonoBehaviour {
             }
             if (_spitterTarget != null) { pos = _spitterTarget.transform.position; return true; }
         }
-        var barricade = _terrain?.GetClosestAliveBarricade(transform.position);
+        var barricade = _terrain?.GetAliveBarricadeByIndex(_preferredBarricadeIndex, transform.position);
         if (barricade.HasValue) { pos = barricade.Value; return true; }
         var wall = _terrain?.GetWallTarget();
         if (wall.HasValue) { pos = wall.Value; return true; }
@@ -132,6 +140,10 @@ public class MinionController : MonoBehaviour {
         _hitFlash?.Flash();
         _hp -= amount;
         if (_hp <= 0f) Die();
+    }
+
+    public void SetPreferredBarricadeIndex(int index) {
+        _preferredBarricadeIndex = Mathf.Clamp(index, 0, 2);
     }
 
     private void Die() {

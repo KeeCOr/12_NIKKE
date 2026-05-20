@@ -36,6 +36,25 @@ public class MapConfigSO : ScriptableObject {
         return new Vector2(Random.Range(last.xMin, last.xMax), Random.Range(last.yMin, last.yMax));
     }
 
+    public int GetNearestSpawnLaneIndex(Vector2 position) {
+        if (spawnZones == null || spawnZones.Length == 0)
+            return 1;
+
+        int best = 0;
+        float bestDist = float.MaxValue;
+        for (int i = 0; i < spawnZones.Length; i++) {
+            var z = spawnZones[i];
+            float cy = (z.yMin + z.yMax) * 0.5f;
+            float dist = Mathf.Abs(position.y - cy);
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = i;
+            }
+        }
+
+        return Mathf.Clamp(best, 0, 2);
+    }
+
     // 전체 스폰 구역 중심 → 도착 지점 방향 벡터 (폴백 이동 방향)
     public Vector2 DiagonalDirection() {
         if (spawnZones == null || spawnZones.Length == 0)

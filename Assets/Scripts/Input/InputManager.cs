@@ -97,6 +97,9 @@ public class InputManager : MonoBehaviour {
             if (Vector2.Distance(worldPos, _pressWorldPos) > 0.12f)
                 _moved = true;
 
+            if (_selectedMember < 0 && _moved)
+                SetSelection(GetNearestAliveSquadMember(worldPos));
+
             if (_selectedMember >= 0 && _selectedMember < aimControllers.Length) {
                 aimControllers[_selectedMember].DragTarget = worldPos;
 
@@ -175,6 +178,22 @@ public class InputManager : MonoBehaviour {
                 && (squadMembers[i] == null || !squadMembers[i].IsAlive)) continue;
             float d = Vector2.Distance(worldPos, aimControllers[i].AimPosition);
             if (d < bestDist) { bestDist = d; best = i; }
+        }
+        return best;
+    }
+
+    private int GetNearestAliveSquadMember(Vector2 worldPos) {
+        if (squadMembers == null) return -1;
+
+        int best = -1;
+        float bestDist = float.MaxValue;
+        for (int i = 0; i < squadMembers.Length; i++) {
+            if (squadMembers[i] == null || !squadMembers[i].IsAlive) continue;
+            float d = Vector2.Distance(worldPos, squadMembers[i].transform.position);
+            if (d < bestDist) {
+                bestDist = d;
+                best = i;
+            }
         }
         return best;
     }

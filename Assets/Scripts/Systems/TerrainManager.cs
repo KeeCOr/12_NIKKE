@@ -104,6 +104,21 @@ public class TerrainManager : MonoBehaviour {
         return best >= 0 ? barricadeRenderers[best].transform.position : null;
     }
 
+    public Vector2? GetAliveBarricadeByIndex(int preferredIndex, Vector2 fallbackFrom) {
+        EnsureStateSize();
+        if (barricadeRenderers == null) return null;
+
+        if (preferredIndex >= 0
+            && preferredIndex < _barricadeAlive.Length
+            && preferredIndex < barricadeRenderers.Length
+            && _barricadeAlive[preferredIndex]
+            && barricadeRenderers[preferredIndex] != null) {
+            return barricadeRenderers[preferredIndex].transform.position;
+        }
+
+        return GetClosestAliveBarricade(fallbackFrom);
+    }
+
     public Vector2? GetWallTarget() {
         if (_wallHp <= 0f || wallRenderer == null) return null;
         return wallRenderer.transform.position;

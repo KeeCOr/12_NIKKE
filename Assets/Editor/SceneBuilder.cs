@@ -164,9 +164,9 @@ public static class SceneBuilder {
 
         var barSr = new SpriteRenderer[3];
         var barSp = new Sprite[3]; // damage sprites (healthy / damaged / critical)
-        float[] barX = { 3.2f, 5.0f, 6.8f };
+        float[] barX = { 2.9f, 5.0f, 7.1f };
         // Y values follow the boss diagonal path (upper-right → lower-left)
-        float[] barY = { 1.34f, 2.10f, 2.86f };
+        float[] barY = { 1.16f, 2.10f, 3.04f };
         for (int i = 0; i < 3; i++) {
             // barSprite is landscape (2528×1696) — stretch to portrait so it reads as a tall barrier
             var barGo = MkSprite($"Barricade{i}", terrainParent.transform,
@@ -218,6 +218,7 @@ public static class SceneBuilder {
 
         var smcArr = new SquadMemberController[5];
         var aimArr = new AimController[5];
+        bool[] flipCharacterX = { false, false, true, false, false };
         for (int i = 0; i < 5; i++) {
             var go = new GameObject(names[i]);
             go.transform.SetParent(squadParent.transform);
@@ -228,6 +229,7 @@ public static class SceneBuilder {
             sr.sprite       = csp ?? white;
             sr.color        = csp != null ? Color.white : sColors[i];
             sr.sortingOrder = 8;
+            sr.flipX        = flipCharacterX[i];
             if (csp != null) FitSprite(go, csp, 1.04f, 3.0f);   // portrait sprite → ~1.04 x 1.40 world units
             var smc = go.AddComponent<SquadMemberController>();
             smc.config = squadCfgs[i];
@@ -956,15 +958,12 @@ public static class SceneBuilder {
         var cfg = LoadOrCreate<MapConfigSO>(CONFIGS + "/MapConfig.asset");
         cfg.destX = GameConfig.DEFENSE_LINE;
         cfg.destY = GameConfig.SQUAD_SLOT_Y[0];   // minions target the frontmost slot
-        // 3 spawn paths along the diagonal (upper-right → lower-left)
-        // Only reset if zones are empty or unset — preserves manual edits
-        if (cfg.spawnZones == null || cfg.spawnZones.Length == 0) {
-            cfg.spawnZones = new SpawnZone[] {
-                new SpawnZone { xMin=12.5f, xMax=13.5f, yMin=4.50f, yMax=5.50f, weight=1f }, // 상단 경로
-                new SpawnZone { xMin=11.5f, xMax=12.5f, yMin=3.60f, yMax=4.40f, weight=1f }, // 중단 경로
-                new SpawnZone { xMin=12.0f, xMax=13.0f, yMin=5.00f, yMax=5.80f, weight=1f }, // 최상단 경로
-            };
-        }
+        // Three spawn lanes map to Barricade0/1/2 so minions do not all converge on one barrier.
+        cfg.spawnZones = new SpawnZone[] {
+            new SpawnZone { xMin=11.8f, xMax=12.9f, yMin=3.05f, yMax=3.75f, weight=1f },
+            new SpawnZone { xMin=12.1f, xMax=13.2f, yMin=4.05f, yMax=4.75f, weight=1f },
+            new SpawnZone { xMin=12.4f, xMax=13.5f, yMin=5.05f, yMax=5.75f, weight=1f },
+        };
         EditorUtility.SetDirty(cfg);
         return cfg;
     }

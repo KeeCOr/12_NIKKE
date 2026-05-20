@@ -1,6 +1,12 @@
 using UnityEngine;
 
 public class WaveSystem : MonoBehaviour {
+    private static readonly SpawnZone[] DefaultSpawnZones = {
+        new SpawnZone { xMin=11.8f, xMax=12.9f, yMin=3.05f, yMax=3.75f, weight=1f },
+        new SpawnZone { xMin=12.1f, xMax=13.2f, yMin=4.05f, yMax=4.75f, weight=1f },
+        new SpawnZone { xMin=12.4f, xMax=13.5f, yMin=5.05f, yMax=5.75f, weight=1f },
+    };
+
     [SerializeField] private MinionConfigSO runnerConfig;
     [SerializeField] private MinionConfigSO berserkerConfig;
     [SerializeField] private MinionConfigSO spitterConfig;
@@ -56,17 +62,36 @@ public class WaveSystem : MonoBehaviour {
         int count = Random.Range(p.countMin, p.countMax + 1);
         for (int i = 0; i < count; i++) {
             var type = WeightedRandom(p);
-            Vector2 pos = mapConfig != null
-                ? mapConfig.RandomSpawnPoint()
-                : new Vector2(
-                    Random.Range(GameConfig.SPAWN_X_MIN, GameConfig.SPAWN_X_MAX),
-                    Random.Range(GameConfig.SPAWN_Y_MIN, GameConfig.SPAWN_Y_MAX));
-            SpawnMinion(type, pos);
+            Vector2 pos = RandomSpawnPoint(out int laneIndex);
+            SpawnMinion(type, pos, laneIndex);
             GameEvents.RaiseSpawnMinion(type, pos);
         }
     }
 
-    private void SpawnMinion(MinionType type, Vector2 pos) {
+    private Vector2 RandomSpawnPoint(out int laneIndex) {
+        SpawnZone[] zones = mapConfig != null && mapConfig.spawnZones != null && mapConfig.spawnZones.Length > 0
+            ? mapConfig.spawnZones
+            : DefaultSpawnZones;
+
+        float total = 0f;
+        foreach (var z in zones) total += z.weight;
+
+        float r = Random.value * total;
+        laneIndex = zones.Length - 1;
+        for (int i = 0; i < zones.Length; i++) {
+            r -= zones[i].weight;
+            if (r <= 0f) {
+                laneIndex = i;
+                break;
+            }
+        }
+
+        var lane = zones[laneIndex];
+        laneIndex = Mathf.Clamp(laneIndex, 0, 2);
+        return new Vector2(Random.Range(lane.xMin, lane.xMax), Random.Range(lane.yMin, lane.yMax));
+    }
+
+    private void SpawnMinion(MinionType type, Vector2 pos, int laneIndex) {
         GameObject prefab = type switch {
             MinionType.Runner    => runnerPrefab,
             MinionType.Berserker => berserkerPrefab,
@@ -89,9 +114,10 @@ public class WaveSystem : MonoBehaviour {
         var spawnPos = new Vector3(pos.x, pos.y + yOff, 0f);
 
         var go = Instantiate(prefab, spawnPos, Quaternion.identity);
-        if (mapConfig != null) {
-            var mc = go.GetComponent<MinionController>();
-            if (mc != null) mc.mapConfig = mapConfig;
+        var mc = go.GetComponent<MinionController>();
+        if (mc != null) {
+            mc.mapConfig = mapConfig;
+            mc.SetPreferredBarricadeIndex(laneIndex);
         }
     }
 
