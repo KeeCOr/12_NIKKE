@@ -11503,6 +11503,7 @@ MonoBehaviour:
   runnerPrefab: {fileID: 5223571350375760188, guid: f8d24bd5766b76542ac8455396145836, type: 3}
   berserkerPrefab: {fileID: 1296828448424802570, guid: 8c70941024997b04eb3293bdc8d7dd9b, type: 3}
   spitterPrefab: {fileID: 5129597519976423898, guid: 8d21f0bea8ac4ab418cf3192c487cf2f, type: 3}
+  mapConfig: {fileID: 0}
 --- !u!1 &1134650067
 GameObject:
   m_ObjectHideFlags: 0

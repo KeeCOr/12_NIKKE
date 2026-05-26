@@ -45,11 +45,19 @@
     <li>왼쪽을 향하던 Charlie 스프라이트는 <code>flipX</code>로 보정한다.</li>
   </ul>
 
+  <h3>이미지 리소스 복구</h3>
+  <ul>
+    <li><code>SquadVsMonster/Repair Image Links</code> 메뉴를 추가했다.</li>
+    <li>배치 실행 메서드 <code>ResourceRepairUtility.RepairImageLinksCLI</code>로 씬과 미니언 프리팹의 Sprite 참조를 경로 기준으로 재연결할 수 있다.</li>
+    <li>복구 대상은 배경, 보스, 바리케이드, 캐릭터, 도로 장애물, 미니언 프리팹, 탄환 프리팹이다.</li>
+  </ul>
+
   <h2>검증</h2>
   <ul>
     <li>EditMode 테스트에 레인별 바리케이드 우선 선택 테스트를 추가했다.</li>
     <li>EditMode 테스트에 스폰 레인 판정 테스트를 추가했다.</li>
     <li>EditMode 테스트에 free-aim 조준 유지 테스트를 추가했다.</li>
+    <li>이미지 GUID와 Sprite 참조를 대조해 missing sprite 참조가 없는지 확인한다.</li>
   </ul>
 </body>
 </html>

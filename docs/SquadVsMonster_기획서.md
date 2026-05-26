@@ -25,7 +25,13 @@
 - 전투 대상이 있는 오른쪽을 향하도록 캐릭터 스프라이트 방향을 정리했다.
 - 왼쪽을 향하던 Charlie 스프라이트는 `flipX`로 보정한다.
 
+### 이미지 리소스 복구
+- `SquadVsMonster/Repair Image Links` 메뉴를 추가했다.
+- 배치 실행 메서드 `ResourceRepairUtility.RepairImageLinksCLI`로 씬과 미니언 프리팹의 Sprite 참조를 경로 기준으로 재연결할 수 있다.
+- 복구 대상은 배경, 보스, 바리케이드, 캐릭터, 도로 장애물, 미니언 프리팹, 탄환 프리팹이다.
+
 ## 검증
 - EditMode 테스트에 레인별 바리케이드 우선 선택 테스트를 추가했다.
 - EditMode 테스트에 스폰 레인 판정 테스트를 추가했다.
 - EditMode 테스트에 free-aim 조준 유지 테스트를 추가했다.
+- 이미지 GUID와 Sprite 참조를 대조해 missing sprite 참조가 없는지 확인한다.
