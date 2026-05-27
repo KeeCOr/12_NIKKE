@@ -853,16 +853,16 @@ public static class SceneBuilder {
         };
         // SNIPER / AR / SHOTGUN / ROCKET / DMR
         WeaponConfig[] weapons = {
-            // Sniper — no max range; fires at any distance
+            // Sniper uses the shared default range.
             new WeaponConfig { name="Barrett", magazineSize= 6, damage=120f, fireRate=2.20f, reloadTime=1.8f, bulletSpeed=2500f, bulletType=BulletType.Single,  pellets=1, spread= 0f, maxRange=  0f },
-            // AR — 5-round burst (fast shots), then 1.8 s cooldown; limited to 8 wu
-            new WeaponConfig { name="M249",    magazineSize= 5, damage= 15f, fireRate=0.07f, reloadTime=1.8f, bulletSpeed=1500f, bulletType=BulletType.Single,  pellets=1, spread= 8f, maxRange=8.0f },
-            // Shotgun — tight spread, 3.5 wu max; won't fire if target out of range
-            new WeaponConfig { name="KS-23",   magazineSize= 4, damage= 18f, fireRate=0.90f, reloadTime=2.5f, bulletSpeed= 800f, bulletType=BulletType.Shotgun, pellets=8, spread=20f, maxRange=3.5f },
-            // Rocket — splash damage, 11 wu max
-            new WeaponConfig { name="RPG",     magazineSize= 3, damage= 90f, fireRate=2.50f, reloadTime=3.0f, bulletSpeed= 800f, bulletType=BulletType.Rocket,  pellets=1, spread= 5f, splashRadius=150f, maxRange=11.0f },
-            // DMR — semi-auto precision, 9 wu max
-            new WeaponConfig { name="Railgun", magazineSize= 2, damage=280f, fireRate=4.00f, reloadTime=3.0f, bulletSpeed=3000f, bulletType=BulletType.Single,  pellets=1, spread= 0f, maxRange=9.0f },
+            // AR — 5-round burst (fast shots), then 1.8 s cooldown.
+            new WeaponConfig { name="M249",    magazineSize= 5, damage= 15f, fireRate=0.07f, reloadTime=1.8f, bulletSpeed=1500f, bulletType=BulletType.Single,  pellets=1, spread= 8f, maxRange=15.0f },
+            // Shotgun keeps the shortest range, but still reaches the opening boss target.
+            new WeaponConfig { name="KS-23",   magazineSize= 4, damage= 18f, fireRate=0.90f, reloadTime=2.5f, bulletSpeed= 800f, bulletType=BulletType.Shotgun, pellets=8, spread=20f, maxRange=12.0f },
+            // Rocket — splash damage.
+            new WeaponConfig { name="RPG",     magazineSize= 3, damage= 90f, fireRate=2.50f, reloadTime=3.0f, bulletSpeed= 800f, bulletType=BulletType.Rocket,  pellets=1, spread= 5f, splashRadius=150f, maxRange=15.0f },
+            // DMR — semi-auto precision.
+            new WeaponConfig { name="Railgun", magazineSize= 2, damage=280f, fireRate=4.00f, reloadTime=3.0f, bulletSpeed=3000f, bulletType=BulletType.Single,  pellets=1, spread= 0f, maxRange=16.0f },
         };
         SpecialType[] specials    = { SpecialType.WeakpointBonus, SpecialType.BurstAccuracy, SpecialType.None, SpecialType.RocketSplash, SpecialType.WeakpointMark };
         float[]       specialVals = { 2.0f, 1.3f, 1f, 1.8f, 1.4f };
