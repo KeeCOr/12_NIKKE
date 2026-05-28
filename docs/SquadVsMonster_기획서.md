@@ -1,5 +1,14 @@
 # SquadVsMonster 기획서
 
+
+---
+
+## 플레이 미리보기
+
+### 플레이 미리보기
+![플레이 미리보기](./SquadVsMonster_gameplay_preview.png)
+
+---
 ## 최신 변경 사항
 
 ### 미니언 타겟팅
@@ -35,9 +44,18 @@
 - 시작 보스 조준점까지 기본 무기 사정거리가 닿도록 기본 사정거리를 16 월드 유닛으로 조정한다.
 - Bravo, Charlie, Delta, Echo 무기 사정거리를 현재 전투 시작 거리 기준으로 재조정해 모든 캐릭터가 전투 시작 직후 공격할 수 있게 한다.
 
+### UI/전장 이미지 리소스
+- 예시 이미지의 어두운 SF 전술 HUD 방향에 맞춘 1차 이미지 리소스 목록을 `docs/image_resource_list_2026-05-28.md`에 정리한다.
+- 생성 리소스는 HUD/UI 아틀라스, 스킬/상태 아이콘 아틀라스, 전장 오브젝트 투명 아틀라스다.
+- 생성 리소스는 기존 원화 교체가 아니라 레이아웃 및 UI 비주얼 개선에 사용할 보강 에셋으로 관리한다.
+- 생성 리소스에서 UI/오브젝트 슬라이스를 분리하고 `GeneratedVisualApplicator.ApplyGeneratedVisualsCLI`로 Game 씬에 적용한다.
+- 우측 전술 상태 스택, 미니맵 프레임, 폭격 아이콘, 보스 파츠 아이콘, 캐릭터별 스쿼드 카드 프레임을 추가한다.
+
 ## 검증
 - EditMode 테스트에 레인별 바리케이드 우선 선택 테스트를 추가했다.
 - EditMode 테스트에 스폰 레인 판정 테스트를 추가했다.
 - EditMode 테스트에 free-aim 조준 유지 테스트를 추가했다.
 - EditMode 테스트에 캐릭터 슬롯 간격과 기본 공격 사정거리 검증을 추가했다.
 - 이미지 GUID와 Sprite 참조를 대조해 missing sprite 참조가 없는지 확인한다.
+- 생성 이미지 리소스는 Unity 임포트 후 아틀라스 단위로 보관하고, UI 적용 단계에서 개별 스프라이트로 분리한다.
+- 생성 UI 적용 후 `Game.unity`에 `GeneratedMiniMapPanel`, `GeneratedStatusStack`, `GeneratedVisualProps`가 포함되는지 확인한다.
