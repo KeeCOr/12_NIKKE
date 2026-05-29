@@ -50,6 +50,7 @@
 - 생성 리소스는 기존 원화 교체가 아니라 레이아웃 및 UI 비주얼 개선에 사용할 보강 에셋으로 관리한다.
 - 생성 리소스에서 UI/오브젝트 슬라이스를 분리하고 `GeneratedVisualApplicator.ApplyGeneratedVisualsCLI`로 Game 씬에 적용한다.
 - 우측 전술 상태 스택, 미니맵 프레임, 폭격 아이콘, 보스 파츠 아이콘, 캐릭터별 스쿼드 카드 프레임을 추가한다.
+- 버튼/프레임 전용 아틀라스를 추가 생성하고, 폭격 버튼/상태 패널/HP바/결과 화면 버튼에 적용한다.
 
 ## 검증
 - EditMode 테스트에 레인별 바리케이드 우선 선택 테스트를 추가했다.
@@ -59,3 +60,4 @@
 - 이미지 GUID와 Sprite 참조를 대조해 missing sprite 참조가 없는지 확인한다.
 - 생성 이미지 리소스는 Unity 임포트 후 아틀라스 단위로 보관하고, UI 적용 단계에서 개별 스프라이트로 분리한다.
 - 생성 UI 적용 후 `Game.unity`에 `GeneratedMiniMapPanel`, `GeneratedStatusStack`, `GeneratedVisualProps`가 포함되는지 확인한다.
+- 버튼/프레임 적용 후 `Result.unity`에 `GeneratedRetryCorner`, `GeneratedMenuCorner`가 포함되는지 확인한다.

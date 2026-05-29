@@ -6,7 +6,9 @@ using UnityEngine.UI;
 
 public static class GeneratedVisualApplicator {
     const string ScenePath = "Assets/Scenes/Game.unity";
+    const string ResultScenePath = "Assets/Scenes/Result.unity";
     const string UiPath = "Assets/Sprites/UI/Generated/Slices/";
+    const string ButtonPath = "Assets/Sprites/UI/Generated/ButtonSlices/";
     const string ObjPath = "Assets/Sprites/Object/Generated/Slices/";
 
     [MenuItem("SquadVsMonster/Apply Generated Visuals")]
@@ -26,6 +28,11 @@ public static class GeneratedVisualApplicator {
         ApplyWorldVisuals();
 
         EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
+
+        EditorSceneManager.OpenScene(ResultScenePath);
+        ApplyResultVisuals();
+        EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
+
         AssetDatabase.SaveAssets();
         Debug.Log("[GeneratedVisualApplicator] Applied generated UI and battlefield visuals.");
     }
@@ -65,11 +72,11 @@ public static class GeneratedVisualApplicator {
         if (canvas == null) return;
         var root = canvas.transform;
 
-        SetImageSprite(Find(root, "BossHpBarPanel/BossBg"), Ui("boss_hp_frame"), new Color(1f, 1f, 1f, 0.98f));
-        SetImageSprite(Find(root, "WallHpPanel/WallBg"), Ui("status_panel_blue"), Color.white);
-        SetImageSprite(Find(root, "WavePanel/WaveBg"), Ui("status_panel_timer"), Color.white);
-        SetImageSprite(Find(root, "ActionPanel/ActionBg"), Ui("status_panel_gold"), Color.white);
-        SetImageSprite(Find(root, "ActionPanel/BombBtn"), Ui("button_round_gold"), Color.white);
+        SetImageSprite(Find(root, "BossHpBarPanel/BossBg"), Button("hp_red_long"), new Color(1f, 1f, 1f, 0.98f));
+        SetImageSprite(Find(root, "WallHpPanel/WallBg"), Button("info_blue_shield"), Color.white);
+        SetImageSprite(Find(root, "WavePanel/WaveBg"), Button("info_gold_resource"), Color.white);
+        SetImageSprite(Find(root, "ActionPanel/ActionBg"), Button("cmd_gold_normal"), Color.white);
+        SetImageSprite(Find(root, "ActionPanel/BombBtn"), Button("round_gold"), Color.white);
 
         Transform bombIcon = Find(root, "ActionPanel/BombBtn/BombIcon");
         if (bombIcon != null) bombIcon.gameObject.SetActive(false);
@@ -81,7 +88,7 @@ public static class GeneratedVisualApplicator {
         for (int i = 0; i < memberNames.Length; i++) {
             Transform col = Find(root, $"SquadPanel/Col_{memberNames[i]}");
             if (col == null) continue;
-            SetImageSprite(Find(col, "ColBg"), Ui(cardSprites[i]), Color.white);
+            SetImageSprite(Find(col, "ColBg"), Button(CardFrameForIndex(i)), Color.white);
             EnsureIcon(col, "GeneratedWeaponIcon", WeaponIconForIndex(i), new Vector2(0.06f, 0.48f), new Vector2(0.30f, 0.72f), Color.white);
         }
 
@@ -97,7 +104,7 @@ public static class GeneratedVisualApplicator {
         foreach (var entry in partIcons) {
             Transform part = FindChildRecursive(root, entry.Key);
             if (part == null) continue;
-            SetImageSprite(part, Ui("button_round_blue"), new Color(1f, 1f, 1f, 0.82f));
+            SetImageSprite(part, Button(PartFrameForKey(entry.Key)), new Color(1f, 1f, 1f, 0.90f));
             EnsureIcon(part, "GeneratedPartIcon", Ui(entry.Value), new Vector2(0.26f, 0.30f), new Vector2(0.74f, 0.82f), Color.white);
             Transform label = Find(part, "Label");
             if (label != null) {
@@ -118,6 +125,19 @@ public static class GeneratedVisualApplicator {
     static Sprite WeaponIconForIndex(int index) {
         string[] names = { "icon_target", "icon_reload", "icon_splash", "icon_rocket", "icon_rail" };
         return Ui(names[Mathf.Clamp(index, 0, names.Length - 1)]);
+    }
+
+    static string CardFrameForIndex(int index) {
+        string[] names = { "cmd_blue_normal", "cmd_purple_normal", "cmd_green_normal", "cmd_red_danger", "cmd_gold_normal" };
+        return names[Mathf.Clamp(index, 0, names.Length - 1)];
+    }
+
+    static string PartFrameForKey(string key) {
+        if (key.Contains("CORE")) return "part_purple_02";
+        if (key.Contains("CHEST")) return "part_red_02";
+        if (key.Contains("LEG")) return "part_green_02";
+        if (key.Contains("ARM")) return "part_blue_02";
+        return "part_gold_02";
     }
 
     static void BuildMiniMap(Transform canvas) {
@@ -146,9 +166,24 @@ public static class GeneratedVisualApplicator {
         SetRect(stack.GetComponent<RectTransform>(), new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
             new Vector2(-10f, -192f), new Vector2(200f, 164f));
 
-        AddStatusRow(stack.transform, "DefenseRow", "DEFENSE", Ui("status_panel_blue"), Ui("icon_shield"), 0);
-        AddStatusRow(stack.transform, "AutoAimRow", "AUTO AIM", Ui("status_panel_target"), Ui("icon_auto_aim"), 1);
-        AddStatusRow(stack.transform, "SpeedRow", "SPEED", Ui("status_panel_speed"), Ui("icon_speed"), 2);
+        AddStatusRow(stack.transform, "DefenseRow", "DEFENSE", Button("info_blue_shield"), Ui("icon_shield"), 0);
+        AddStatusRow(stack.transform, "AutoAimRow", "AUTO AIM", Button("info_red_target"), Ui("icon_auto_aim"), 1);
+        AddStatusRow(stack.transform, "SpeedRow", "SPEED", Button("info_gold_resource"), Ui("icon_speed"), 2);
+    }
+
+    static void ApplyResultVisuals() {
+        var canvas = GameObject.Find("Canvas");
+        if (canvas == null) return;
+        var root = canvas.transform;
+
+        SetImageSprite(Find(root, "CenterPanel/PanelBg"), Button("cmd_blue_glow"), new Color(1f, 1f, 1f, 0.96f));
+        SetImageSprite(Find(root, "CenterPanel/RetryBtn"), Button("cmd_gold_glow"), Color.white);
+        SetImageSprite(Find(root, "CenterPanel/MenuBtn"), Button("cmd_blue_normal"), Color.white);
+
+        EnsureIcon(Find(root, "CenterPanel/RetryBtn"), "GeneratedRetryCorner", Button("corner_gold"),
+            new Vector2(0.02f, 0.18f), new Vector2(0.16f, 0.82f), Color.white);
+        EnsureIcon(Find(root, "CenterPanel/MenuBtn"), "GeneratedMenuCorner", Button("corner_blue"),
+            new Vector2(0.02f, 0.18f), new Vector2(0.16f, 0.82f), Color.white);
     }
 
     static void AddStatusRow(Transform parent, string name, string label, Sprite panelSprite, Sprite icon, int index) {
@@ -302,6 +337,10 @@ public static class GeneratedVisualApplicator {
 
     static Sprite Ui(string name) {
         return AssetDatabase.LoadAssetAtPath<Sprite>($"{UiPath}{name}.png");
+    }
+
+    static Sprite Button(string name) {
+        return AssetDatabase.LoadAssetAtPath<Sprite>($"{ButtonPath}{name}.png");
     }
 
     static Sprite Obj(string name) {

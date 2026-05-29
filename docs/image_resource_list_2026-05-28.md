@@ -10,6 +10,7 @@
 | --- | --- | --- | --- |
 | HUD/UI 아틀라스 | `Assets/Sprites/UI/Generated/ui_hud_atlas_v1.png` | 보스 HP바, 스쿼드 카드, 상태 패널, 미니맵 프레임, 버튼 프레임, 장식 라인 | 생성 완료 |
 | 스킬/상태 아이콘 아틀라스 | `Assets/Sprites/UI/Generated/skill_status_icons_atlas_v1.png` | 폭격, EMP, 중력장, 화염 폭풍, 잠금, 방어, 탄약, 재장전, 약점, 타이머 등 24종 아이콘 | 생성 완료 |
+| 버튼/프레임 아틀라스 | `Assets/Sprites/UI/Generated/button_frame_atlas_v1.png` | 명령 버튼, 토글 버튼, 원형 스킬 버튼, 사각 아이콘 프레임, HP/진행바, 정보 패널, 코너 브래킷 | 생성 완료 |
 | 전장 오브젝트 아틀라스 | `Assets/Sprites/Object/Generated/battlefield_props_atlas_v1.png` | 금속 바리케이드, 콘크리트 엄폐물, 보급 상자, 기술 파일런, 바닥 패널, 균열/탄흔/파편 데칼 | 생성 완료, 투명 PNG |
 | 전장 오브젝트 원본 | `Assets/Sprites/Object/Generated/battlefield_props_atlas_v1_chromakey.png` | 투명 처리 전 원본 보관 | 생성 완료 |
 
@@ -24,10 +25,12 @@
 | 전술 상태 UI | `Assets/Scenes/Game.unity` | 우측에 DEFENSE, AUTO AIM, SPEED 상태 스택 추가 |
 | 미니맵 UI | `Assets/Scenes/Game.unity` | 우측 하단에 생성 미니맵 프레임과 아군/적 마커 추가 |
 | 전장 오브젝트 | `Assets/Scenes/Game.unity` | 바리케이드, 로드블록, 보급 상자, 파일런, 바닥 패널, 균열/탄착 장식 적용 |
+| 버튼/프레임 강화 | `Assets/Scenes/Game.unity`, `Assets/Scenes/Result.unity` | 전용 버튼/프레임 슬라이스 51개를 추가하고 폭격 버튼, 상태 패널, HP바, 결과 화면 버튼에 적용 |
 
 ## 적용 도구
 - `SquadVsMonster/Apply Generated Visuals` 메뉴로 생성 이미지 리소스를 현재 Game 씬에 다시 적용할 수 있다.
 - 배치 실행 메서드 `GeneratedVisualApplicator.ApplyGeneratedVisualsCLI`도 제공한다.
+- 버튼/프레임 전용 슬라이스는 `Assets/Sprites/UI/Generated/ButtonSlices/`에 보관한다.
 
 ## 권장 후속 리소스
 - UI 슬라이스용 개별 스프라이트: 위 아틀라스에서 보스 HP 프레임, 카드 프레임, 버튼 프레임을 개별 PNG로 분리.
