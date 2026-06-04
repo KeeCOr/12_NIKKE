@@ -391,7 +391,7 @@ public static class GeneratedVisualApplicator {
             prop.GetArrayElementAtIndex(i).objectReferenceValue = sprites[i];
     }
 
-    static void EnsureIcon(Transform parent, string name, Sprite sprite, Vector2 anchorMin, Vector2 anchorMax, Color color) {
+    static void EnsureIcon(Transform parent, string name, Sprite sprite, Vector2 anchorMin, Vector2 anchorMax, Color color, bool preserveAspect = false) {
         if (parent == null || sprite == null) return;
         Transform icon = parent.Find(name);
         if (icon == null) {
@@ -402,6 +402,8 @@ public static class GeneratedVisualApplicator {
         var rt = icon.GetComponent<RectTransform>();
         SetRect(rt, anchorMin, anchorMax, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
         SetImageSprite(icon, sprite, color);
+        var img = icon.GetComponent<Image>();
+        if (img != null) img.preserveAspect = preserveAspect;
     }
 
     static void SetImageSprite(Transform target, Sprite sprite, Color color) {
@@ -444,6 +446,14 @@ public static class GeneratedVisualApplicator {
 
     static Sprite Button(string name) {
         return AssetDatabase.LoadAssetAtPath<Sprite>($"{ButtonPath}{name}.png");
+    }
+
+    static Sprite Portrait(string name) {
+        return AssetDatabase.LoadAssetAtPath<Sprite>($"{PortraitPath}{name}.png");
+    }
+
+    static Sprite Vfx(string name) {
+        return AssetDatabase.LoadAssetAtPath<Sprite>($"{VfxPath}{name}.png");
     }
 
     static Sprite Obj(string name) {
