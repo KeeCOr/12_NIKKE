@@ -9,6 +9,8 @@ public static class GeneratedVisualApplicator {
     const string ResultScenePath = "Assets/Scenes/Result.unity";
     const string UiPath = "Assets/Sprites/UI/Generated/Slices/";
     const string ButtonPath = "Assets/Sprites/UI/Generated/ButtonSlices/";
+    const string PortraitPath = "Assets/Sprites/UI/Generated/Portraits/";
+    const string VfxPath = "Assets/Sprites/UI/Generated/VfxSlices/";
     const string ObjPath = "Assets/Sprites/Object/Generated/Slices/";
 
     [MenuItem("SquadVsMonster/Apply Generated Visuals")]
@@ -84,12 +86,13 @@ public static class GeneratedVisualApplicator {
             new Vector2(0.18f, 0.18f), new Vector2(0.82f, 0.82f), Color.white);
 
         string[] memberNames = { "ALPHA", "BRAVO", "CHARLIE", "DELTA", "ECHO" };
-        string[] cardSprites = { "squad_card_blue", "squad_card_purple", "squad_card_green", "squad_card_red", "squad_card_gold" };
         for (int i = 0; i < memberNames.Length; i++) {
             Transform col = Find(root, $"SquadPanel/Col_{memberNames[i]}");
             if (col == null) continue;
             SetImageSprite(Find(col, "ColBg"), Button(CardFrameForIndex(i)), Color.white);
-            EnsureIcon(col, "GeneratedWeaponIcon", WeaponIconForIndex(i), new Vector2(0.06f, 0.48f), new Vector2(0.30f, 0.72f), Color.white);
+            EnsureIcon(col, "GeneratedPortrait", PortraitForIndex(i), new Vector2(0.04f, 0.40f), new Vector2(0.34f, 0.93f), Color.white, true);
+            EnsureIcon(col, "GeneratedWeaponIcon", WeaponIconForIndex(i), new Vector2(0.68f, 0.50f), new Vector2(0.94f, 0.76f), Color.white, true);
+            AddCardOverlay(col, i);
         }
 
         var partIcons = new Dictionary<string, string> {
@@ -105,7 +108,7 @@ public static class GeneratedVisualApplicator {
             Transform part = FindChildRecursive(root, entry.Key);
             if (part == null) continue;
             SetImageSprite(part, Button(PartFrameForKey(entry.Key)), new Color(1f, 1f, 1f, 0.90f));
-            EnsureIcon(part, "GeneratedPartIcon", Ui(entry.Value), new Vector2(0.26f, 0.30f), new Vector2(0.74f, 0.82f), Color.white);
+            EnsureIcon(part, "GeneratedPartIcon", Ui(entry.Value), new Vector2(0.26f, 0.30f), new Vector2(0.74f, 0.82f), Color.white, true);
             Transform label = Find(part, "Label");
             if (label != null) {
                 var rt = label.GetComponent<RectTransform>();
@@ -120,11 +123,19 @@ public static class GeneratedVisualApplicator {
 
         BuildMiniMap(root);
         BuildStatusStack(root);
+        BuildSkillBar(root);
+        BuildCombatFeedback(root);
+        ApplyBossPortrait(root);
     }
 
     static Sprite WeaponIconForIndex(int index) {
         string[] names = { "icon_target", "icon_reload", "icon_splash", "icon_rocket", "icon_rail" };
         return Ui(names[Mathf.Clamp(index, 0, names.Length - 1)]);
+    }
+
+    static Sprite PortraitForIndex(int index) {
+        string[] names = { "portrait_alpha", "portrait_bravo", "portrait_charlie", "portrait_delta", "portrait_echo" };
+        return Portrait(names[Mathf.Clamp(index, 0, names.Length - 1)]);
     }
 
     static string CardFrameForIndex(int index) {
@@ -155,6 +166,98 @@ public static class GeneratedVisualApplicator {
         AddMarker(panel.transform, "BossMarker", new Vector2(34f, 28f), new Color(1f, 0.18f, 0.12f));
         AddMarker(panel.transform, "EnemyMarker1", new Vector2(20f, 14f), new Color(1f, 0.18f, 0.12f));
         AddMarker(panel.transform, "EnemyMarker2", new Vector2(48f, -2f), new Color(1f, 0.18f, 0.12f));
+    }
+
+    static void ApplyBossPortrait(Transform canvas) {
+        Transform panel = Find(canvas, "BossHpBarPanel");
+        if (panel == null) return;
+
+        EnsureIcon(panel, "GeneratedBossPortraitFrame", Button("round_red"), new Vector2(0.00f, 0.46f), new Vector2(0.09f, 1.00f), Color.white, true);
+        EnsureIcon(panel, "GeneratedBossPortrait", Portrait("portrait_boss"), new Vector2(0.01f, 0.50f), new Vector2(0.08f, 0.97f), Color.white, true);
+        EnsureIcon(panel, "GeneratedEnrageFlare", Vfx("vfx_enrage"), new Vector2(0.89f, 0.50f), new Vector2(0.99f, 0.98f), new Color(1f, 0.25f, 0.12f, 0.74f), true);
+    }
+
+    static void AddCardOverlay(Transform col, int index) {
+        string[] overlayNames = { "READY", "RELOAD", "LOW AMMO", "BURST", "MARK" };
+        Color[] colors = {
+            new Color(0.35f, 0.85f, 1f),
+            new Color(0.55f, 0.85f, 1f),
+            new Color(1f, 0.65f, 0.2f),
+            new Color(1f, 0.30f, 0.20f),
+            new Color(0.95f, 0.70f, 1f),
+        };
+
+        Transform old = Find(col, "GeneratedStatusTag");
+        if (old != null) Object.DestroyImmediate(old.gameObject);
+        var tag = new GameObject("GeneratedStatusTag", typeof(RectTransform), typeof(Image));
+        tag.transform.SetParent(col, false);
+        SetRect(tag.GetComponent<RectTransform>(), new Vector2(0.38f, 0.73f), new Vector2(0.96f, 0.91f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+        SetImageSprite(tag.transform, Button(index == 2 ? "toggle_red_danger" : "toggle_blue"), Color.white);
+        AddSmallText(tag.transform, "Label", overlayNames[Mathf.Clamp(index, 0, overlayNames.Length - 1)], 10,
+            colors[Mathf.Clamp(index, 0, colors.Length - 1)], Vector2.zero, Vector2.one);
+    }
+
+    static void BuildSkillBar(Transform canvas) {
+        Transform old = Find(canvas, "GeneratedSkillBar");
+        if (old != null) Object.DestroyImmediate(old.gameObject);
+
+        var bar = new GameObject("GeneratedSkillBar", typeof(RectTransform));
+        bar.transform.SetParent(canvas, false);
+        SetRect(bar.GetComponent<RectTransform>(), new Vector2(0.50f, 0f), new Vector2(0.50f, 0f), new Vector2(0.5f, 0f),
+            new Vector2(0f, 12f), new Vector2(470f, 96f));
+
+        AddSkillButton(bar.transform, "SkillAirstrike", "Q", "AIR", Button("round_gold"), Ui("icon_airstrike"), Vfx("vfx_flame"), 0, false);
+        AddSkillButton(bar.transform, "SkillEMP", "W", "EMP", Button("round_blue"), Ui("icon_emp"), Vfx("vfx_emp"), 1, false);
+        AddSkillButton(bar.transform, "SkillGravity", "E", "GRAV", Button("round_purple"), Ui("icon_gravity"), Vfx("vfx_gravity"), 2, false);
+        AddSkillButton(bar.transform, "SkillLocked", "R", "LOCK", Button("round_gray"), Ui("icon_locked"), Vfx("vfx_reload"), 3, true);
+    }
+
+    static void AddSkillButton(Transform parent, string name, string key, string label, Sprite frame, Sprite icon, Sprite vfx, int index, bool locked) {
+        var root = new GameObject(name, typeof(RectTransform), typeof(Image));
+        root.transform.SetParent(parent, false);
+        SetRect(root.GetComponent<RectTransform>(), new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+            new Vector2(index * 116f + 8f, 0f), new Vector2(104f, 92f));
+        SetImageSprite(root.transform, frame, locked ? new Color(0.55f, 0.55f, 0.58f, 0.85f) : Color.white);
+        EnsureIcon(root.transform, "Pulse", vfx, new Vector2(0.05f, 0.07f), new Vector2(0.95f, 0.95f), locked ? new Color(0f, 0f, 0f, 0f) : new Color(1f, 1f, 1f, 0.34f), true);
+        EnsureIcon(root.transform, "Icon", icon, new Vector2(0.20f, 0.24f), new Vector2(0.80f, 0.86f), locked ? new Color(0.65f, 0.65f, 0.68f, 0.80f) : Color.white, true);
+        AddSmallText(root.transform, "Key", key, 14, new Color(1f, 0.92f, 0.55f), new Vector2(0.03f, 0.70f), new Vector2(0.27f, 0.98f));
+        AddSmallText(root.transform, "Label", label, 11, locked ? new Color(0.75f, 0.20f, 0.16f) : new Color(0.82f, 0.92f, 1f), new Vector2(0.08f, 0.02f), new Vector2(0.92f, 0.24f));
+    }
+
+    static void BuildCombatFeedback(Transform canvas) {
+        Transform old = Find(canvas, "GeneratedCombatFeedback");
+        if (old != null) Object.DestroyImmediate(old.gameObject);
+
+        var root = new GameObject("GeneratedCombatFeedback", typeof(RectTransform));
+        root.transform.SetParent(canvas, false);
+        SetRect(root.GetComponent<RectTransform>(), Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+
+        AddFeedbackBadge(root.transform, "WeakpointBadge", Vfx("vfx_weakpoint"), "WEAK POINT", new Vector2(0.61f, 0.57f), new Color(1f, 0.55f, 0.95f, 0.92f));
+        AddFeedbackBadge(root.transform, "CriticalBadge", Vfx("vfx_critical"), "CRITICAL", new Vector2(0.69f, 0.48f), new Color(1f, 0.32f, 0.12f, 0.92f));
+        AddFeedbackBadge(root.transform, "RangeBadge", Vfx("vfx_range_ring"), "OUT OF RANGE", new Vector2(0.49f, 0.42f), new Color(1f, 0.72f, 0.18f, 0.82f));
+        AddFeedbackBadge(root.transform, "ShieldHitBadge", Vfx("vfx_shield"), "SHIELD HIT", new Vector2(0.74f, 0.62f), new Color(0.35f, 0.82f, 1f, 0.70f));
+    }
+
+    static void AddFeedbackBadge(Transform parent, string name, Sprite vfx, string label, Vector2 anchor, Color color) {
+        var badge = new GameObject(name, typeof(RectTransform), typeof(Image));
+        badge.transform.SetParent(parent, false);
+        SetRect(badge.GetComponent<RectTransform>(), anchor, anchor, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(122f, 96f));
+        SetImageSprite(badge.transform, vfx, color);
+        AddSmallText(badge.transform, "Label", label, 12, color, new Vector2(0f, 0f), new Vector2(1f, 0.28f));
+    }
+
+    static void AddSmallText(Transform parent, string name, string content, int fontSize, Color color, Vector2 anchorMin, Vector2 anchorMax) {
+        Transform old = Find(parent, name);
+        if (old != null) Object.DestroyImmediate(old.gameObject);
+        var text = new GameObject(name, typeof(RectTransform), typeof(Text));
+        text.transform.SetParent(parent, false);
+        SetRect(text.GetComponent<RectTransform>(), anchorMin, anchorMax, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+        var txt = text.GetComponent<Text>();
+        txt.text = content;
+        txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        txt.fontSize = fontSize;
+        txt.alignment = TextAnchor.MiddleCenter;
+        txt.color = color;
     }
 
     static void BuildStatusStack(Transform canvas) {
