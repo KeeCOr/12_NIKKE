@@ -66,3 +66,40 @@
 - 생성 UI 적용 후 `Game.unity`에 `GeneratedMiniMapPanel`, `GeneratedStatusStack`, `GeneratedVisualProps`가 포함되는지 확인한다.
 - 버튼/프레임 적용 후 `Result.unity`에 `GeneratedRetryCorner`, `GeneratedMenuCorner`가 포함되는지 확인한다.
 - 전체 HUD 적용 후 `Game.unity`에 `GeneratedSkillBar`, `GeneratedCombatFeedback`, `GeneratedBossPortrait`, `GeneratedPortrait`가 포함되는지 확인한다.
+
+<!-- APPLIED_RESOURCES_START -->
+## 적용 리소스
+
+> 자동 갱신: 2026-06-04. 코드, 씬, 프리팹, 설정 파일에서 참조가 확인된 리소스 기준입니다.
+
+- 이미지/스프라이트: `Assets/Sprites/Background/stage_1.png`, `Assets/Sprites/Character/character (1).png`, `Assets/Sprites/Character/character (2).png`, `Assets/Sprites/Character/character (3).png`, `Assets/Sprites/Character/character (4).png`, `Assets/Sprites/Character/character (5).png`, `Assets/Sprites/circle.png`, `Assets/Sprites/Enemy/B_1_NM.png`, `Assets/Sprites/Enemy/M_1_Runner.png`, `Assets/Sprites/Enemy/M_2_Leader.png`, `Assets/Sprites/Enemy/M_3_Shooter.png`, `Assets/Sprites/Object/Generated/Slices/barricade_broken_01.png` 외 70개
+- Unity/프리팹: `Assets/Configs/BossConfig.asset`, `Assets/Configs/MinionConfig_Berserker.asset`, `Assets/Configs/MinionConfig_Runner.asset`, `Assets/Configs/MinionConfig_Spitter.asset`, `Assets/Configs/SquadConfig_Alpha.asset`, `Assets/Configs/SquadConfig_Bravo.asset`, `Assets/Configs/SquadConfig_Charlie.asset`, `Assets/Configs/SquadConfig_Delta.asset`, `Assets/Configs/SquadConfig_Echo.asset`, `Assets/Prefabs/Berserker.prefab`, `Assets/Prefabs/Bullet.prefab`, `Assets/Prefabs/Runner.prefab` 외 1개
+
+메모:
+- 리소스 후보 155개 중 자동 참조 확인 95개.
+<!-- APPLIED_RESOURCES_END -->
+
+<!-- RESOURCE_PREVIEWS_START -->
+## 공유용 이미지 미리보기
+
+> 자동 갱신: 2026-06-04. 공유 시 문서와 함께 아래 이미지 경로가 포함되어야 합니다.
+
+![12_NIKKE character (1)](../Assets/Sprites/Character/character (1).png)
+- `Assets/Sprites/Character/character (1).png`
+
+![12_NIKKE character (2)](../Assets/Sprites/Character/character (2).png)
+- `Assets/Sprites/Character/character (2).png`
+
+![12_NIKKE character (3)](../Assets/Sprites/Character/character (3).png)
+- `Assets/Sprites/Character/character (3).png`
+
+![12_NIKKE character (4)](../Assets/Sprites/Character/character (4).png)
+- `Assets/Sprites/Character/character (4).png`
+
+![12_NIKKE character (5)](../Assets/Sprites/Character/character (5).png)
+- `Assets/Sprites/Character/character (5).png`
+
+![12_NIKKE B_1_NM](../Assets/Sprites/Enemy/B_1_NM.png)
+- `Assets/Sprites/Enemy/B_1_NM.png`
+
+<!-- RESOURCE_PREVIEWS_END -->
