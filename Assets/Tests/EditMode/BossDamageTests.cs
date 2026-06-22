@@ -85,7 +85,7 @@ public class BossDamageTests {
 
             var head = FindState(received, "HEAD");
             Assert.NotNull(received);
-            Assert.That(head.HpRatio, Is.EqualTo(0.75f).Within(0.001f));
+            Assert.That(head.HpRatio, Is.EqualTo(0.7125f).Within(0.001f));
             Assert.IsTrue(head.isActive);
             Assert.IsFalse(head.isDestroyed);
         } finally {

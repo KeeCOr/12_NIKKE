@@ -90,6 +90,7 @@ public class BossController : MonoBehaviour {
 
         GameEvents.OnBossPartDestroyed += OnPartDestroyed;
         GameEvents.OnBossPartBreak     += OnPartBreak;
+        PublishPartHudState();
     }
 
     void Start() {
@@ -243,6 +244,7 @@ public class BossController : MonoBehaviour {
         part.TakeDamage(finalDmg);
         Hp = Mathf.Max(0f, Hp - finalDmg);
         GameEvents.RaiseBossHpChanged(Hp, MaxHp);
+        PublishPartHudState();
 
         bool isCrit = finalDmg >= rawDmg * 1.25f || partId == "CORE";
         Vector3 numPos = hitPos ?? (part.transform.position + Vector3.up * 0.6f);
@@ -270,6 +272,7 @@ public class BossController : MonoBehaviour {
 
         // Spawn a temporary weakspot at a random offset from the boss body
         SpawnWeakspot();
+        PublishPartHudState();
     }
 
     private void SpawnWeakspot() {
@@ -286,6 +289,7 @@ public class BossController : MonoBehaviour {
         if (!IsAlive) return;
         Hp = Mathf.Max(0f, Hp - bonusDmg);
         GameEvents.RaiseBossHpChanged(Hp, MaxHp);
+        PublishPartHudState();
         DamageNumberSystem.Instance?.Show(bonusDmg, true, pos + Vector3.up * 0.5f);
         _cameraShaker?.Shake(0.35f, 0.013f);
         if (Hp <= 0f) Die();
@@ -305,6 +309,7 @@ public class BossController : MonoBehaviour {
         const float bonusDmg = 100f;
         Hp = Mathf.Max(0f, Hp - bonusDmg);
         GameEvents.RaiseBossHpChanged(Hp, MaxHp);
+        PublishPartHudState();
         VFXSystem.Instance?.ShowPartBreak(pos);
         _cameraShaker?.Shake(0.45f, 0.016f);
         DamageNumberSystem.Instance?.Show(bonusDmg, true, pos + Vector3.up * 0.5f);
@@ -345,6 +350,20 @@ public class BossController : MonoBehaviour {
         bodyRenderer.color = _bodyBaseColor;
     }
 
+
+    private void PublishPartHudState() {
+        var states = new BossPartHudState[_parts.Count];
+        int i = 0;
+        foreach (var part in _parts.Values) {
+            states[i++] = new BossPartHudState(
+                part.PartId,
+                part.Hp,
+                part.MaxHp,
+                part.IsActive,
+                part.IsDestroyed);
+        }
+        GameEvents.RaiseBossPartHpChanged(states);
+    }
     public BossPartController GetPart(string id) =>
         _parts.TryGetValue(id, out var p) ? p : null;
 
@@ -354,4 +373,7 @@ public class BossController : MonoBehaviour {
         return Hp / MaxHp <= config.enrageHpThreshold && (headDestroyed || chestDestroyed);
     }
 }
+
+
+
 

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour {
@@ -19,8 +19,9 @@ public class UIManager : MonoBehaviour {
     void OnEnable() {
         GameEvents.OnGameEnded += ShowEndOverlay;
         if (bossHpBar != null) {
-            GameEvents.OnBossHpChanged     += bossHpBar.OnBossHpChanged;
-            GameEvents.OnBossPartDestroyed += bossHpBar.OnPartDestroyed;
+            GameEvents.OnBossHpChanged       += bossHpBar.OnBossHpChanged;
+            GameEvents.OnBossPartHpChanged   += bossHpBar.OnBossPartHpChanged;
+            GameEvents.OnBossPartDestroyed   += bossHpBar.OnPartDestroyed;
         }
 
         int count = 0;
@@ -71,8 +72,9 @@ public class UIManager : MonoBehaviour {
     void OnDisable() {
         GameEvents.OnGameEnded -= ShowEndOverlay;
         if (bossHpBar != null) {
-            GameEvents.OnBossHpChanged     -= bossHpBar.OnBossHpChanged;
-            GameEvents.OnBossPartDestroyed -= bossHpBar.OnPartDestroyed;
+            GameEvents.OnBossHpChanged       -= bossHpBar.OnBossHpChanged;
+            GameEvents.OnBossPartHpChanged   -= bossHpBar.OnBossPartHpChanged;
+            GameEvents.OnBossPartDestroyed   -= bossHpBar.OnPartDestroyed;
         }
 
         if (_ammoHandlers != null) {
@@ -86,3 +88,4 @@ public class UIManager : MonoBehaviour {
         }
     }
 }
+

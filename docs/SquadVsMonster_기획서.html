@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8">
@@ -19,6 +19,13 @@
 <img src="./SquadVsMonster_gameplay_preview.png" alt="플레이 미리보기" style="max-width:100%;border-radius:8px;margin:12px 0;">
 
 <h2>최신 변경 사항</h2>
+<h3>v1.1 보스 HUD / 광폭화 조건 정리</h3>
+<ul>
+  <li>P0 광폭화 조건을 기획 의도대로 <code>보스 HP &lt;= 50%</code> AND <code>HEAD 또는 CHEST 파괴</code>로 정정했다.</li>
+  <li>보스 부위 HUD 스냅샷 이벤트를 추가해 HEAD, ARM, LEG, CHEST, CORE의 HP 비율, 비활성, 파괴 상태를 UI가 받을 수 있게 했다.</li>
+  <li>상단 보스 HP UI가 부위별 HP 슬라이더와 <code>OFF</code> / <code>BREAK</code> 상태 텍스트를 갱신하도록 확장했다.</li>
+  <li>EditMode 테스트에 광폭화 조건과 보스 부위 HUD 스냅샷 검증을 추가했다.</li>
+</ul>
 
   <h3>미니언 타겟팅</h3>
   <ul>
@@ -136,3 +143,4 @@
 <!-- RESOURCE_PREVIEWS_END -->
 </body>
 </html>
+

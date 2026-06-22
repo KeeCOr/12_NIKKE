@@ -1,4 +1,4 @@
-# SquadVsMonster 기획서
+﻿# SquadVsMonster 기획서
 
 
 ---
@@ -10,6 +10,11 @@
 
 ---
 ## 최신 변경 사항
+### v1.1 보스 HUD / 광폭화 조건 정리
+- P0 광폭화 조건을 기획 의도대로 `보스 HP <= 50%` AND `HEAD 또는 CHEST 파괴`로 정정했다.
+- 보스 부위 HUD 스냅샷 이벤트를 추가해 HEAD, ARM, LEG, CHEST, CORE의 HP 비율, 비활성, 파괴 상태를 UI가 받을 수 있게 했다.
+- 상단 보스 HP UI가 부위별 HP 슬라이더와 `OFF` / `BREAK` 상태 텍스트를 갱신하도록 확장했다.
+- EditMode 테스트에 광폭화 조건과 보스 부위 HUD 스냅샷 검증을 추가했다.
 
 ### 미니언 타겟팅
 - 일반 미니언은 더 이상 모든 상황에서 가장 가까운 바리케이드 하나로만 몰리지 않는다.
@@ -103,3 +108,4 @@
 - `Assets/Sprites/Enemy/B_1_NM.png`
 
 <!-- RESOURCE_PREVIEWS_END -->
+
