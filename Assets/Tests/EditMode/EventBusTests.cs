@@ -1,4 +1,4 @@
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using UnityEngine;
 
 public class EventBusTests {
@@ -14,6 +14,24 @@ public class EventBusTests {
         Assert.AreEqual(4500f, receivedMax);
     }
 
+
+    [Test]
+    public void BossPartHpChanged_FiresSnapshots() {
+        BossPartHudState[] received = null;
+        var snapshots = new[] {
+            new BossPartHudState("HEAD", 75f, 100f, true, false),
+            new BossPartHudState("CORE", 0f, 100f, false, false)
+        };
+
+        GameEvents.OnBossPartHpChanged += states => received = states;
+        GameEvents.RaiseBossPartHpChanged(snapshots);
+
+        Assert.NotNull(received);
+        Assert.AreEqual(2, received.Length);
+        Assert.AreEqual("HEAD", received[0].partId);
+        Assert.That(received[0].HpRatio, Is.EqualTo(0.75f).Within(0.001f));
+        Assert.IsFalse(received[1].isActive);
+    }
     [Test]
     public void MemberDied_FiresWithId() {
         string receivedId = null;
@@ -31,3 +49,4 @@ public class EventBusTests {
         Assert.IsFalse(fired);
     }
 }
+

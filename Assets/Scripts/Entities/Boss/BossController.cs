@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 // VFXSystem and DamageNumberSystem referenced by name (same assembly)
@@ -348,8 +348,10 @@ public class BossController : MonoBehaviour {
     public BossPartController GetPart(string id) =>
         _parts.TryGetValue(id, out var p) ? p : null;
 
-    public bool MeetsEnrageCondition() =>
-        Hp / MaxHp <= config.enrageHpThreshold
-        && _parts.TryGetValue("HEAD",  out var h) && h.IsDestroyed
-        && _parts.TryGetValue("CHEST", out var c) && c.IsDestroyed;
+    public bool MeetsEnrageCondition() {
+        bool headDestroyed = _parts.TryGetValue("HEAD", out var h) && h.IsDestroyed;
+        bool chestDestroyed = _parts.TryGetValue("CHEST", out var c) && c.IsDestroyed;
+        return Hp / MaxHp <= config.enrageHpThreshold && (headDestroyed || chestDestroyed);
+    }
 }
+
