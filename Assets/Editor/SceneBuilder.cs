@@ -54,8 +54,12 @@ public static class SceneBuilder {
 
         AssetDatabase.Refresh();
 
-        bool open = EditorUtility.DisplayDialog("SceneBuilder", "Game scene built!\nAssets/Scenes/Game.unity", "Open", "Close");
-        if (open) EditorSceneManager.OpenScene(scenePath);
+        if (!Application.isBatchMode) {
+            bool open = EditorUtility.DisplayDialog("SceneBuilder", "Game scene built!\nAssets/Scenes/Game.unity", "Open", "Close");
+            if (open) EditorSceneManager.OpenScene(scenePath);
+        } else {
+            Debug.Log("[SceneBuilder] Game scene built: " + scenePath);
+        }
     }
 
     [MenuItem("SquadVsMonster/Build Result Scene")]
@@ -409,6 +413,8 @@ public static class SceneBuilder {
         };
 
         var partIcons = new Image[7];
+        var partHpSliders = new Slider[7];
+        var partHpTexts = new Text[7];
         for (int i = 0; i < 7; i++) {
             var iconGo = new GameObject($"PartIcon_{pidsF[i]}");
             iconGo.transform.SetParent(panel.transform, false);
@@ -434,13 +440,24 @@ public static class SceneBuilder {
             MkText(iconGo.transform, "Label", pids[i], 11,
                 new Color(Mathf.Min(1f, pColors[i].r + 0.25f), Mathf.Min(1f, pColors[i].g + 0.20f), Mathf.Min(1f, pColors[i].b + 0.20f)),
                 TextAnchor.MiddleCenter,
-                Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+                new Vector2(0f, 0.42f), Vector2.one, Vector2.zero, Vector2.zero);
+
+            partHpSliders[i] = MkSlider(iconGo.transform, $"PartHpSlider_{pidsF[i]}",
+                pColors[i], new Color(0.04f, 0.05f, 0.08f, 0.95f),
+                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(6f, 16f), new Vector2(-12f, 7f));
+            partHpSliders[i].value = 1f;
+
+            partHpTexts[i] = MkText(iconGo.transform, $"PartHpText_{pidsF[i]}", "100%", 10,
+                new Color(0.92f, 0.96f, 1f), TextAnchor.MiddleCenter,
+                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0f, 2f), new Vector2(0f, 13f));
         }
 
         var bossBarUi = panel.AddComponent<BossHpBarUI>();
         SetField(bossBarUi, "hpSlider", hpSlider);
         SetField(bossBarUi, "hpText",   hpText);
         SetArrayField(bossBarUi, "partIcons", ToObj(partIcons));
+        SetArrayField(bossBarUi, "partHpSliders", ToObj(partHpSliders));
+        SetArrayField(bossBarUi, "partHpTexts", ToObj(partHpTexts));
         return bossBarUi;
     }
 

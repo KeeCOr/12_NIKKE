@@ -19,3 +19,4 @@ MonoBehaviour:
   attackRange: 0.4
   attackInterval: 1.5
   terrainDamage: 15
+  spriteHalfHeight: 3

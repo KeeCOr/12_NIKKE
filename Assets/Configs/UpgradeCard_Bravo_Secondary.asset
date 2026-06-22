@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8bfa88421e9d814895eea3dd5af0aca, type: 3}
+  m_Name: UpgradeCard_Bravo_Secondary
+  m_EditorClassIdentifier: 
+  title: "Bravo \uD0C4\uCC3D \uD655\uC7A5"
+  description: "Bravo \uD0C4\uCC3D +5\uBC1C"
+  icon: {fileID: 0}
+  targetType: 0
+  targetId: bravo
+  stat: 4
+  value: 5
+  isMultiplier: 0
+  maxStacks: 3
