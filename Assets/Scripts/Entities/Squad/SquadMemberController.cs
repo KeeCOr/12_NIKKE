@@ -19,23 +19,32 @@ public class SquadMemberController : MonoBehaviour {
     private Color  _defaultColor;
 
     void Awake() {
+        _aim = GetComponent<AimController>();
+        if (config != null) {
+            Initialize(config, bodyRenderer);
+        }
+    }
+
+    public void Initialize(SquadMemberConfigSO squadConfig, SpriteRenderer renderer) {
+        config = squadConfig;
+        bodyRenderer = renderer;
         if (config == null) {
-            Debug.LogError($"[SquadMemberController] config not assigned on {gameObject.name}. Disabling.", this);
             enabled = false;
             return;
         }
-        MaxHp       = config.hp;
-        Hp          = MaxHp;
+        MaxHp = config.hp;
+        Hp = MaxHp;
         CurrentAmmo = config.weapon.magazineSize;
-        _aim        = GetComponent<AimController>();
+        _aim = GetComponent<AimController>();
         _defaultColor = bodyRenderer != null ? bodyRenderer.color : Color.white;
+        enabled = true;
     }
 
     void OnEnable()  => GameEvents.OnBossShockwave += HandleShockwave;
     void OnDisable() => GameEvents.OnBossShockwave -= HandleShockwave;
 
     void Update() {
-        if (!IsAlive) return;
+        if (config == null || !IsAlive) return;
 
         if (IsReloading) {
             _reloadTimer -= Time.deltaTime;

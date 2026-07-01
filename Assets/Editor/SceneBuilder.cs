@@ -211,36 +211,14 @@ public static class SceneBuilder {
 
         // Squad
         var squadParent = new GameObject("Squad");
-        Color[] sColors = {
-            new Color(0.20f, 0.50f, 0.90f),
-            new Color(0.90f, 0.50f, 0.15f),
-            new Color(0.20f, 0.75f, 0.30f),
-            new Color(0.75f, 0.20f, 0.85f),
-            new Color(0.10f, 0.85f, 0.85f),
-        };
-        string[] names = { "Alpha", "Bravo", "Charlie", "Delta", "Echo" };
-
         var smcArr = new SquadMemberController[5];
         var aimArr = new AimController[5];
-        bool[] flipCharacterX = { false, false, true, false, false };
-        for (int i = 0; i < 5; i++) {
-            var go = new GameObject(names[i]);
-            go.transform.SetParent(squadParent.transform);
-            go.transform.position   = new Vector3(GameConfig.SQUAD_SLOT_X[i], GameConfig.SQUAD_SLOT_Y[i], 0f);
-            go.transform.localScale = new Vector3(1.04f, 1.40f, 1f);  // fallback size (2× scale)
-            var sr  = go.AddComponent<SpriteRenderer>();
-            var csp = charSprites[i];
-            sr.sprite       = csp ?? white;
-            sr.color        = csp != null ? Color.white : sColors[i];
-            sr.sortingOrder = 8;
-            sr.flipX        = flipCharacterX[i];
-            if (csp != null) FitSprite(go, csp, 1.04f, 3.0f);   // portrait sprite → ~1.04 x 1.40 world units
-            var smc = go.AddComponent<SquadMemberController>();
-            smc.config = squadCfgs[i];
-            SetField(smc, "bodyRenderer", sr);
-            aimArr[i] = go.AddComponent<AimController>();
-            smcArr[i] = smc;
-        }
+        var spawnerGo = new GameObject("SquadRuntimeSpawner");
+        spawnerGo.transform.SetParent(squadParent.transform);
+        var spawner = spawnerGo.AddComponent<SquadRuntimeSpawner>();
+        SetArrayField(spawner, "squadConfigs", ToObj(squadCfgs));
+        SetArrayField(spawner, "characterSprites", ToObj(charSprites));
+        SetField(spawner, "fallbackSprite", white);
 
         // InputManager
         var imGo = new GameObject("InputManager");
@@ -284,7 +262,7 @@ public static class SceneBuilder {
         new GameObject("VFXSystem").AddComponent<VFXSystem>();
 
         // Atmospheric & polish
-        BuildAmbientParticles();
+        // Ambient particles disabled: Unity player build reports level0 corruption with this serialized ParticleSystem.
         BuildGroundAccentLine(white);
 
         BuildGameUI(smcArr, squadCfgs, bossCtrl);
@@ -334,6 +312,7 @@ public static class SceneBuilder {
         var bossBarUi    = BuildBossBar(canvasGo.transform);
         BuildWallHpBar(canvasGo.transform);
         BuildWaveInfo(canvasGo.transform);
+        BuildCombatAdvisor(canvasGo.transform);
 
         var squadBars    = new SquadHpBarUI[5];
         var ammoDisplays = new AmmoDisplayUI[5];
@@ -507,6 +486,24 @@ public static class SceneBuilder {
     }
 
     // ── Squad panel ──────────────────────────────────────────────────────────
+    static void BuildCombatAdvisor(Transform canvasT) {
+        var panel = MkPanel(canvasT, "CombatAdvisorPanel",
+            new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+            new Vector2(0f, -188f), new Vector2(720f, 44f));
+        MkUiImg(panel.transform, "AdvisorBg", new Color(0.04f, 0.06f, 0.12f, 0.92f), stretch: true);
+        var accent = MkUiImg(panel.transform, "AdvisorAccent", new Color(0.35f, 0.70f, 1.0f, 0.90f),
+            new Vector2(0f, 0f), new Vector2(0f, 1f), Vector2.zero, new Vector2(5f, 0f));
+        var body = MkText(panel.transform, "AdvisorText", "Break CHEST to expose CORE.  |  Squad ready - drag aim markers onto weak parts.",
+            18, new Color(0.88f, 0.94f, 1.0f), TextAnchor.MiddleCenter,
+            Vector2.zero, Vector2.one, new Vector2(12f, 0f), new Vector2(-20f, 0f));
+        body.resizeTextForBestFit = true;
+        body.resizeTextMinSize = 12;
+        body.resizeTextMaxSize = 18;
+        var advisor = panel.AddComponent<CombatAdvisorUI>();
+        SetField(advisor, "bodyText", body);
+        SetField(advisor, "accentImage", accent);
+    }
+
     static void BuildSquadPanel(Transform canvasT, SquadMemberController[] smcArr,
         SquadMemberConfigSO[] squadCfgs, SquadHpBarUI[] outBars, AmmoDisplayUI[] outAmmo) {
 

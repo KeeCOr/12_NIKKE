@@ -33,6 +33,10 @@ public class InputManager : MonoBehaviour {
     }
 
     void Start() {
+        if (NeedsSquadHeal()) {
+            AutoPopulateSquadMembers();
+        }
+
         // Self-heal: if aimControllers wasn't wired by SceneBuilder, find them from squadMembers
         bool needsHeal = aimControllers == null || aimControllers.Length == 0;
         if (!needsHeal) {
@@ -46,6 +50,24 @@ public class InputManager : MonoBehaviour {
                     aimControllers[i] = squadMembers[i].GetComponent<AimController>();
             Debug.Log("[InputManager] aimControllers auto-populated from squadMembers.");
         }
+    }
+
+    public void BindSquad(SquadMemberController[] members, AimController[] aims) {
+        squadMembers = members;
+        aimControllers = aims;
+    }
+
+    private bool NeedsSquadHeal() {
+        if (squadMembers == null || squadMembers.Length == 0) return true;
+        for (int i = 0; i < squadMembers.Length; i++) {
+            if (squadMembers[i] == null) return true;
+        }
+        return false;
+    }
+
+    private void AutoPopulateSquadMembers() {
+        squadMembers = FindObjectsOfType<SquadMemberController>();
+        System.Array.Sort(squadMembers, (a, b) => a.transform.position.x.CompareTo(b.transform.position.x));
     }
 
     void OnEnable() {

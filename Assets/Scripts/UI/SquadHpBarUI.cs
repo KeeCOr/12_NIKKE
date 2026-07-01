@@ -6,6 +6,10 @@ public class SquadHpBarUI : MonoBehaviour {
     [SerializeField] private Slider reloadSlider;
     [SerializeField] private SquadMemberController member;
 
+    public void Bind(SquadMemberController squadMember) {
+        member = squadMember;
+    }
+
     void Update() {
         if (member == null) return;
         if (hpSlider != null) hpSlider.value = member.GetHpRatio();
