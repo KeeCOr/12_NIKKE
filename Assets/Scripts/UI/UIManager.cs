@@ -6,6 +6,7 @@ public class UIManager : MonoBehaviour {
     [SerializeField] private SquadHpBarUI[] squadHpBars;
     [SerializeField] private AmmoDisplayUI[] ammoDisplays;
     [SerializeField] private SquadMemberConfigSO[] squadConfigs;
+    [SerializeField] private CombatAdvisorUI combatAdvisor;
 
     [SerializeField] private Image endOverlayBg;
     [SerializeField] private Text  endOverlayText;
@@ -18,6 +19,9 @@ public class UIManager : MonoBehaviour {
 
     void OnEnable() {
         GameEvents.OnGameEnded += ShowEndOverlay;
+        if (combatAdvisor == null) combatAdvisor = FindObjectOfType<CombatAdvisorUI>();
+        if (combatAdvisor != null) combatAdvisor.BindSquadComposition(squadConfigs);
+
         if (bossHpBar != null) {
             GameEvents.OnBossHpChanged       += bossHpBar.OnBossHpChanged;
             GameEvents.OnBossPartHpChanged   += bossHpBar.OnBossPartHpChanged;
@@ -88,4 +92,3 @@ public class UIManager : MonoBehaviour {
         }
     }
 }
-
