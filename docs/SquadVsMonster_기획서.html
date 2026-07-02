@@ -437,6 +437,25 @@
   <li>UI 반영: <code>CombatAdvisorUI</code>는 전투 이벤트가 들어오기 전 CombatAdvisorHUD에 조합 프리뷰를 표시하고, 전투가 시작되면 기존 보스 파츠/재장전/다운 상태 조언으로 전환한다. <code>UIManager</code>는 기존 <code>squadConfigs</code>를 HUD에 전달한다.</li>
   <li>대표 피드백 축: 약점 버스트 화력, 얇은 생존 풀, 근/원거리 혼합 포지션을 분리해 설명한다.</li>
 </ul>
+<hr>
+<h2>포트폴리오 리뷰 개선 계획 (2026-07-01)</h2>
+<p><strong>종합 평가</strong>: 6.0/10 | <strong>결정</strong>: ⚠️ 피벗 필요</p>
+<h3>핵심 문제점</h3>
+<ul>
+  <li>자동전투 가챠 레드오션 — 인디가 UA 비용으로 대형 IP에 압살당함</li>
+  <li>Unity 라이선스 부재로 빌드·테스트 미검증</li>
+  <li>스쿼드 멤버 Alpha 1종만 구현</li>
+</ul>
+<h3>피벗 방향</h3>
+<p><strong>현재</strong>: 자동전투 가챠 수집형 (NIKKE류)</p>
+<p><strong>피벗</strong>: 보스전 특화 세션형 (협동 or PvP 비동기) — 가챠 없이 보스 공략 전략이 핵심</p>
+<p><strong>이유</strong>: 인디 규모로 UA 경쟁 없이 차별화 가능한 영역</p>
+<h3>즉시 액션</h3>
+<ul class="checklist">
+  <li>가챠 시스템 제거 결정 검토</li>
+  <li>"보스 약점 실시간 판단" 핵심 메커닉 단독 프로토타입</li>
+  <li>Unity 라이선스 확보 or 엔진 전환 결정</li>
+</ul>
 
 </body>
 </html>
