@@ -1,4 +1,4 @@
-﻿# SquadVsMonster Next Improvement Instruction
+# SquadVsMonster Next Improvement Instruction
 
 Date: 2026-06-24
 
@@ -25,3 +25,9 @@ Turn the current biggest project issue into a small, executable improvement batc
 - Implemented squad composition preview for the requested first-priority feedback: firepower, defense, and position tradeoffs are now summarized from squad configs before combat signals arrive.
 - Added three EditMode tests covering high firepower weak-part burst, thin survival pool, and mixed range positioning acceptance cases.
 - Remaining related idea: a dedicated formation screen can later render the same `SquadCompositionPreview` in separate cards instead of the single-line CombatAdvisorHUD preview.
+
+## 2026-07-02 Unity HUD Smoke Criteria
+
+- The wave result summary logic already exists; do not reimplement it before visual verification.
+- Next task is a Unity scene/HUD smoke pass for three persona cases: win by composition, loss by counter, and loss by underpower/attrition.
+- Completion requires confirming the result summary is visible in `ResultUI`, readable at target resolution, and not overlapped by result buttons or other HUD elements.

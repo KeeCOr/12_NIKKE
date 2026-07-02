@@ -1,27 +1,27 @@
-# SquadVsMonster 페르소나 플레이테스트 피드백
+# SquadVsMonster Persona Playtest Feedback
 
-최신화: 2026-07-01 KST
+Last updated: 2026-07-02 KST
 
-## 테스트 페르소나
+## Persona
 
-- 이름: 문채린
-- 나이: 27
-- 선호 장르: 스쿼드 웨이브 전투
-- 플레이 성향: 캐릭터 수집형 전투에서 조합과 포지션 차이를 보는 것을 좋아하는 플레이어
+- Name: Seo Yuna
+- Age: 27
+- Preferred genre: squad auto-battle and character-collection combat
+- Play context: likes comparing squad composition, role coverage, and wave results before changing the next lineup.
 
-## 플레이 전 기대
+## Persona Expectation
 
-스쿼드 조합으로 몬스터 웨이브를 돌파하는 전투 게임.
+A squad auto-battle fan expects the game to explain why a lineup worked: strongest role, weakest slot, enemy counter, and one next adjustment.
 
-이 페르소나는 이 프로젝트에서 **스쿼드 조합을 바꿨을 때 웨이브 돌파 방식이 달라지는 재미**을 기대한다.
+## 2026-07-02 Recheck
 
-## 테스트 피드백
+- Current strength: the wave result path is already present in code through `CombatAdvisorLogic.GetWaveResultSummary`, `GameManager.LastWaveResultSummary`, `CombatAdvisorUI`, and `ResultUI`.
+- Persona confidence: the project should no longer be treated as missing the entire wave-result model.
+- Remaining risk: Unity scene/HUD visual smoke still needs to confirm that the result summary is readable in the actual scene and not hidden by layout, font scale, or overlay order.
 
-- 좋았던 점: 스쿼드 조합을 바꿨을 때 웨이브 돌파 방식이 달라지는 재미
-- 헷갈린 점: 캐릭터별 역할 차이가 전투 전에 안 보이면 조합 실험 동기가 약하다.
-- 이탈 가능 지점: 조합 선택이 화력, 생존, 포지션 차이로 바로 체감되어야 한다.
-- 1순위 개선 제안: 편성 화면에 화력, 방어, 포지션 장단점을 조합 단위로 미리 보여준다.
+## Next Smoke Criteria
 
-## 후속 개선 기준
-
-다음 개선은 새 시스템을 크게 늘리기보다, 현재 핵심 루프 안에서 플레이어가 행동 전후 차이를 더 빨리 이해하게 만드는 방향이 우선이다.
+1. Run one win-by-composition case and confirm the result summary names the winning factor.
+2. Run one loss-by-counter case and confirm the summary points to the counter or weak slot.
+3. Run one underpower/attrition loss case and confirm the next adjustment is visible without opening another panel.
+4. Confirm the summary text is readable on the target viewport and does not overlap result buttons.
