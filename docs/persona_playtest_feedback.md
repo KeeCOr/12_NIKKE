@@ -1,27 +1,26 @@
-# SquadVsMonster Persona Playtest Feedback
+﻿# SquadVsMonster 페르소나 플레이테스트 피드백
+최신화: 2026-07-03 KST
 
-Last updated: 2026-07-02 KST
+## 페르소나
 
-## Persona
+- 이름: 서유나
+- 나이: 27
+- 선호 장르: 스쿼드 자동전투, 캐릭터 수집형 전투, 보스 패턴 공략
+- 플레이 맥락: 스쿼드 조합, 역할 커버리지, wave 결과를 비교한 뒤 다음 라인업을 조정하는 플레이를 좋아한다.
 
-- Name: Seo Yuna
-- Age: 27
-- Preferred genre: squad auto-battle and character-collection combat
-- Play context: likes comparing squad composition, role coverage, and wave results before changing the next lineup.
+## 기대 경험
 
-## Persona Expectation
+서유나는 자동전투에서도 “왜 이 조합이 이겼는지”를 알고 싶어 한다. 가장 강한 역할, 가장 약한 슬롯, 적 카운터, 다음 조정 한 가지가 결과 화면에서 바로 보여야 한다.
 
-A squad auto-battle fan expects the game to explain why a lineup worked: strongest role, weakest slot, enemy counter, and one next adjustment.
+## 2026-07-03 재점검
 
-## 2026-07-02 Recheck
+- 좋은 점: wave result 경로는 이미 코드에 존재한다. `CombatAdvisorLogic.GetWaveResultSummary`, `GameManager.LastWaveResultSummary`, `CombatAdvisorUI`, `ResultUI`가 연결되어 있다.
+- 신뢰 회복 지점: 프로젝트를 “결과 요약 모델이 없는 상태”로 보면 안 된다. 다음 검증은 로직 구현이 아니라 실제 Unity 씬 가독성이다.
+- 남은 리스크: ResultUI 텍스트가 실제 해상도에서 버튼과 겹치거나, 폰트가 작거나, 결과 요약이 다른 오버레이 뒤에 숨으면 페르소나 신뢰가 다시 떨어진다.
 
-- Current strength: the wave result path is already present in code through `CombatAdvisorLogic.GetWaveResultSummary`, `GameManager.LastWaveResultSummary`, `CombatAdvisorUI`, and `ResultUI`.
-- Persona confidence: the project should no longer be treated as missing the entire wave-result model.
-- Remaining risk: Unity scene/HUD visual smoke still needs to confirm that the result summary is readable in the actual scene and not hidden by layout, font scale, or overlay order.
+## 다음 스모크 기준
 
-## Next Smoke Criteria
-
-1. Run one win-by-composition case and confirm the result summary names the winning factor.
-2. Run one loss-by-counter case and confirm the summary points to the counter or weak slot.
-3. Run one underpower/attrition loss case and confirm the next adjustment is visible without opening another panel.
-4. Confirm the summary text is readable on the target viewport and does not overlap result buttons.
+1. win-by-composition 케이스에서 승리 요인이 이름 붙어 보이는가?
+2. loss-by-counter 케이스에서 카운터 또는 약한 슬롯이 지적되는가?
+3. underpower/attrition loss 케이스에서 다음 조정 한 가지가 별도 패널 없이 보이는가?
+4. ResultUI 요약 텍스트가 목표 해상도에서 버튼과 겹치지 않는가?

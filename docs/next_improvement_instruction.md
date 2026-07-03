@@ -1,33 +1,27 @@
-# SquadVsMonster Next Improvement Instruction
+﻿# SquadVsMonster 다음 개선 지시서
+최신화: 2026-07-03 KST
 
-Date: 2026-06-24
+## 목표
 
-## Goal
-Turn the current biggest project issue into a small, executable improvement batch. This file is intentionally scoped so the next worker can start without rereading the whole workspace audit.
+이미 구현된 wave result summary와 squad composition preview가 실제 Unity 화면에서 페르소나에게 읽히는지 확인한다. 새 결과 로직을 다시 만들기보다, ResultUI/HUD 시각 스모크와 문서 신뢰도 복구에 집중한다.
 
-## Instructions
-1. Improve squad composition feedback so role differences are visible through damage, survival, and positioning changes.
-2. Add a wave result panel that explains why the squad won or failed and suggests one next adjustment.
-3. Keep the sci-fi HUD asset tone consistent when replacing buttons, frames, icons, or combat feedback.
+## 현재 해결된 문제
 
-## Completion Rules
-- Do not include discarded projects in this batch.
-- If gameplay, UI, systems, content, controls, build behavior, or project scope changes, update the project planning document and update log before build/release.
-- If runtime source changes, run the nearest available validation and then perform the required build/package step from the project instructions.
-- If a folder or asset looks ambiguous, document the decision instead of deleting it.
+- CombatAdvisorHUD는 전투 중 약점, 방벽 위협, 재장전/다운 상태 조언을 표시한다.
+- `CombatAdvisorLogic.GetWaveResultSummary`는 승패 원인과 다음 조정 문구를 만든다.
+- `GameManager.LastWaveResultSummary`, `CombatAdvisorUI`, `ResultUI`로 결과 요약 경로가 연결되어 있다.
+- current-facing GDD와 업데이트 내역서를 readable UTF-8 한국어로 복구했다.
 
-## 2026-06-30 Completion Note
-- Current source already includes squad composition feedback through `CombatAdvisorLogic.GetSquadTip`, reload/down-member event tracking, and squad member role differences in weapon/special handling.
-- Current source already includes a wave result advisory path: `CombatAdvisorLogic.GetWaveResultSummary`, `GameManager.LastWaveResultSummary`, `CombatAdvisorUI` end alerts, and `ResultUI` title/reason/next-adjustment fields.
-- The project GDD already records the sci-fi HUD asset tone and the 2026-06-30 wave result advisory update, so no runtime source changes were made in this pass.
+## 다음 구현/검증 범위
 
-## 2026-07-01 Completion Note
-- Implemented squad composition preview for the requested first-priority feedback: firepower, defense, and position tradeoffs are now summarized from squad configs before combat signals arrive.
-- Added three EditMode tests covering high firepower weak-part burst, thin survival pool, and mixed range positioning acceptance cases.
-- Remaining related idea: a dedicated formation screen can later render the same `SquadCompositionPreview` in separate cards instead of the single-line CombatAdvisorHUD preview.
+- ResultUI에서 결과 타이틀, 원인, 다음 조정 텍스트가 모두 보이는지 확인한다.
+- win-by-composition, loss-by-counter, underpower/attrition loss 3개 케이스를 스모크 기준으로 둔다.
+- 버튼, 결과 텍스트, HUD 오버레이가 같은 depth에서 겹치지 않는지 확인한다.
+- 새 캐릭터, 새 가챠 구조, 전체 BM 재설계는 이번 배치 범위가 아니다.
 
-## 2026-07-02 Unity HUD Smoke Criteria
+## 검증 기준
 
-- The wave result summary logic already exists; do not reimplement it before visual verification.
-- Next task is a Unity scene/HUD smoke pass for three persona cases: win by composition, loss by counter, and loss by underpower/attrition.
-- Completion requires confirming the result summary is visible in `ResultUI`, readable at target resolution, and not overlapped by result buttons or other HUD elements.
+- Unity Editor 또는 BatchMode가 가능하면 EditMode/scene smoke를 실행한다.
+- Unity가 잠겨 있거나 라이선스가 막히면, 차단 사유를 명확히 기록하고 성공으로 주장하지 않는다.
+- UI 변경이 발생하면 기획서와 업데이트 내역서를 동시에 갱신한다.
+- 런타임 코드 변경이 없으면 실행파일 새 배치는 하지 않는다.
