@@ -1,4 +1,14 @@
-﻿# SquadVsMonster 업데이트 내역서
+# SquadVsMonster 업데이트 내역서
+
+최신화: 2026-07-16 KST
+
+## 2026-07-16 / v1.6.0 Result Cue Line And Advisor Density
+
+- `WaveResultSummary`에 `cueLine`을 추가해 승패 결과가 생존, 화력, 재장전, 타이밍 중 어디에서 갈렸는지 한 줄로 강조한다.
+- `ResultUI`는 원인 텍스트 아래 cue line을 함께 표시하고, `CombatAdvisorUI`의 전투 종료 알림은 cue line을 우선 노출한다.
+- `CombatAdvisorLogicTests`에 cue line 3개 케이스를 추가해 승리, 생존 붕괴, 재장전 화력 병목을 회귀 검증한다.
+- `SquadCompositionPreview`는 전투 전 편성의 화력/방어/포지션 성향을 HUD로 보여주는 기존 개선을 v1.6.0 문서 기준에 포함했다.
+- 기획서와 업데이트 내역서를 현재 구현 상태 기준의 readable UTF-8 문서로 다시 정리했다.
 
 ## 2026-07-03 / Current GDD Readability And ResultUI Smoke Plan
 

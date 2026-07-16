@@ -1,10 +1,71 @@
-﻿<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>SquadVsMonster 업데이트 내역서</title><style>
-body{margin:0;background:#f7f8fb;color:#16202a;font-family:Segoe UI,Malgun Gothic,Apple SD Gothic Neo,sans-serif;line-height:1.62}main{max-width:1040px;margin:0 auto;padding:40px 24px 64px}h1{font-size:32px;margin:0 0 8px}h2{font-size:22px;margin:32px 0 12px;border-top:1px solid #d8dee8;padding-top:22px}.meta{color:#607080;margin-bottom:24px}.panel{background:#fff;border:1px solid #d8dee8;border-radius:8px;padding:20px;margin:18px 0}table{border-collapse:collapse;width:100%;background:#fff;margin:14px 0 24px}th,td{border:1px solid #d8dee8;padding:10px;vertical-align:top}th{background:#eaf0f6;text-align:left}code{background:#eef1f4;border-radius:4px;padding:2px 5px}ul,ol{padding-left:24px}img.preview{max-width:100%;height:auto;border:1px solid #d8dee8;border-radius:8px;background:#fff}.badge{display:inline-block;border:1px solid #355d8f;color:#355d8f;border-radius:999px;padding:2px 9px;font-size:13px;margin-right:6px}
-</style></head><body><main>
-<h1>SquadVsMonster 업데이트 내역서</h1><p class="meta">최신화: 2026-07-03 KST</p>
-<h2>2026-07-03 / Current GDD Readability And ResultUI Smoke Plan</h2><ul><li>current-facing <code>SquadVsMonster_기획서.md/html</code>을 readable UTF-8 한국어로 복구했다.</li><li>문제 정의, 주 페르소나, 핵심 루프, MVP 가설, 레퍼런스 분석, KPI를 다시 정리했다.</li><li>이미 존재하는 wave result 경로를 명시했다: <code>CombatAdvisorLogic.GetWaveResultSummary</code>, <code>GameManager.LastWaveResultSummary</code>, <code>CombatAdvisorUI</code>, <code>ResultUI</code>.</li><li>다음 작업을 새 결과 로직 구현이 아니라 Unity ResultUI/HUD 시각 스모크로 고정했다.</li><li>이번 배치는 docs-only이므로 실행파일은 새로 만들지 않았다.</li></ul>
-<h2>2026-07-02 / Persona Recheck</h2><ul><li>스쿼드 자동전투 팬 페르소나 기준으로 결과 요약 모델이 누락된 상태는 아님을 확인했다.</li><li>남은 리스크는 실제 ResultUI에서 요약 텍스트가 보이고, 버튼과 겹치지 않으며, 목표 해상도에서 읽히는지 확인하는 것이다.</li></ul>
-<h2>2026-07-01 / v1.5.0 Squad Composition Preview</h2><ul><li>CombatAdvisorHUD가 조합 단위 화력, 방어, 포지션 프리뷰를 보여주도록 추가했다.</li><li><code>CombatAdvisorLogic.GetSquadCompositionPreview</code>가 무기 DPS, HP, 사거리, 특수 역할, 약점 우선순위를 합산한다.</li><li>테스트: <code>CombatAdvisorLogicTests</code>에 화력 A, 방어 C, 혼합 포지션 3개 케이스를 추가했다.</li></ul>
-<h2>2026-06-30 / v1.4.0 Wave Result Advisory</h2><ul><li>전투 종료 결과 요약 로직을 추가했다.</li><li>승패 원인을 화력, 생존, 재장전/포지셔닝 축으로 분리해 설명한다.</li><li>CombatAdvisorHUD 종료 알림과 ResultUI가 같은 결과 요약을 사용하도록 연결했다.</li><li>검증: Unity Editor 라이선스 차단으로 EditMode 테스트/빌드는 미실행, <code>_temp/logic-check</code> .NET 검증 PASS.</li></ul>
-<h2>2026-06-30 / Barricade Resource Replacement</h2><ul><li>적용 자산: <code>Assets/Sprites/Object/Barricade_1.png</code></li><li><code>Game.unity</code>가 참조 중인 GUID를 유지하고 PNG만 교체해 prefab/scene 참조를 보존했다.</li></ul>
-</main></body></html>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SquadVsMonster 업데이트 내역서</title>
+<style>
+:root{color-scheme:light;--ink:#17202a;--muted:#5d6875;--line:#d8dee8;--head:#26384d;--soft:#f4f7fb;--accent:#bf3f42;--gold:#c89824;}
+body{margin:0;background:#ffffff;color:var(--ink);font-family:"Malgun Gothic","Apple SD Gothic Neo",Arial,sans-serif;line-height:1.65;}
+main{max-width:1080px;margin:0 auto;padding:36px 24px 64px;}
+h1{font-size:32px;line-height:1.2;margin:0 0 20px;color:#111827;}
+h2{font-size:22px;margin:34px 0 12px;padding-top:12px;border-top:2px solid var(--head);color:var(--head);}
+h3{font-size:18px;margin:24px 0 10px;color:#2d4158;}
+p{margin:10px 0;color:var(--ink);}ul{padding-left:22px;}li{margin:6px 0;}code{background:#edf1f6;border:1px solid #d7dee8;border-radius:4px;padding:1px 5px;font-family:Consolas,monospace;font-size:.92em;}
+table{width:100%;border-collapse:collapse;margin:12px 0 22px;font-size:14px;}th{background:var(--head);color:#fff;text-align:left;}th,td{border:1px solid var(--line);padding:9px 10px;vertical-align:top;}tr:nth-child(even) td{background:var(--soft);}figure{margin:18px 0;padding:0;}img{max-width:100%;height:auto;max-height:640px;object-fit:contain;border:1px solid var(--line);background:#f8fafc;}
+@media(max-width:720px){main{padding:24px 14px 48px;}h1{font-size:25px;}h2{font-size:19px;}table{font-size:13px;display:block;overflow-x:auto;}}
+</style>
+</head>
+<body><main>
+<h1>SquadVsMonster 업데이트 내역서</h1>
+<p>최신화: 2026-07-16 KST</p>
+<h2>2026-07-16 / v1.6.0 Result Cue Line And Advisor Density</h2>
+<ul>
+<li><code>WaveResultSummary</code>에 <code>cueLine</code>을 추가해 승패 결과가 생존, 화력, 재장전, 타이밍 중 어디에서 갈렸는지 한 줄로 강조한다.</li>
+<li><code>ResultUI</code>는 원인 텍스트 아래 cue line을 함께 표시하고, <code>CombatAdvisorUI</code>의 전투 종료 알림은 cue line을 우선 노출한다.</li>
+<li><code>CombatAdvisorLogicTests</code>에 cue line 3개 케이스를 추가해 승리, 생존 붕괴, 재장전 화력 병목을 회귀 검증한다.</li>
+<li><code>SquadCompositionPreview</code>는 전투 전 편성의 화력/방어/포지션 성향을 HUD로 보여주는 기존 개선을 v1.6.0 문서 기준에 포함했다.</li>
+<li>기획서와 업데이트 내역서를 현재 구현 상태 기준의 readable UTF-8 문서로 다시 정리했다.</li>
+</ul>
+<h2>2026-07-03 / Current GDD Readability And ResultUI Smoke Plan</h2>
+<ul>
+<li>current-facing <code>SquadVsMonster_기획서.md/html</code>을 readable UTF-8 한국어로 복구했다.</li>
+<li>문제 정의, 주 페르소나, 핵심 루프, MVP 가설, 레퍼런스 분석, KPI를 다시 정리했다.</li>
+<li>이미 존재하는 wave result 경로를 명시했다: <code>CombatAdvisorLogic.GetWaveResultSummary</code>, <code>GameManager.LastWaveResultSummary</code>, <code>CombatAdvisorUI</code>, <code>ResultUI</code>.</li>
+<li>다음 작업을 새 결과 로직 구현이 아니라 Unity ResultUI/HUD 시각 스모크로 고정했다.</li>
+<li>이번 배치는 docs-only이므로 실행파일은 새로 만들지 않았다.</li>
+</ul>
+<h2>2026-07-02 / Persona Recheck</h2>
+<ul>
+<li>스쿼드 자동전투 팬 페르소나 기준으로 결과 요약 모델이 누락된 상태는 아님을 확인했다.</li>
+<li>남은 리스크는 실제 ResultUI에서 요약 텍스트가 보이고, 버튼과 겹치지 않으며, 목표 해상도에서 읽히는지 확인하는 것이다.</li>
+</ul>
+<h2>2026-07-01 / v1.5.0 Squad Composition Preview</h2>
+<ul>
+<li>편성/전투 진입 전 CombatAdvisorHUD가 조합 단위 화력, 방어, 포지션 프리뷰를 보여주도록 추가했다.</li>
+<li><code>CombatAdvisorLogic.GetSquadCompositionPreview</code>가 무기 DPS, HP, 사거리, 특수 역할, 약점 우선순위를 합산한다.</li>
+<li><code>CombatAdvisorUI</code>는 전투 신호 전에는 프리뷰를 표시하고, 전투 신호 이후에는 기존 보스/분대 상태 조언으로 전환한다.</li>
+<li>테스트: <code>CombatAdvisorLogicTests</code>에 화력 A, 방어 C, 혼합 포지션 3개 케이스를 추가했다.</li>
+</ul>
+<h2>2026-06-30 / v1.4.0 Wave Result Advisory</h2>
+<ul>
+<li>전투 종료 결과 요약 로직을 추가했다.</li>
+<li>승패 원인을 화력, 생존, 재장전/포지셔닝 축으로 분리해 설명한다.</li>
+<li>CombatAdvisorHUD 종료 알림과 ResultUI가 같은 결과 요약을 사용하도록 연결했다.</li>
+<li>검증: Unity Editor 라이선스 차단으로 EditMode 테스트/빌드는 미실행, <code>_temp/logic-check</code> .NET 검증 PASS.</li>
+</ul>
+<h2>2026-06-30 / Barricade Resource Replacement</h2>
+<ul>
+<li>적용 자산: <code>Assets/Sprites/Object/Barricade_1.png</code></li>
+<li>적용 방식: <code>Game.unity</code>가 참조 중인 GUID를 유지하고 PNG만 교체해 prefab/scene 참조를 보존했다.</li>
+<li>목표: 반복 노출되는 방벽 리소스의 SF 전장 가독성과 경고 톤을 강화했다.</li>
+</ul>
+<h2>2026-06-24 / Document Split</h2>
+<ul>
+<li>기획서와 업데이트 내역서를 분리했다.</li>
+<li>기획서는 게임 소개, 핵심 루프, MVP 가설, KPI, UX 원칙 중심으로 유지한다.</li>
+<li>변경 이력, 구현 로그, 검증 기록은 업데이트 내역서에서 관리한다.</li>
+</ul>
+
+</main></body>
+</html>

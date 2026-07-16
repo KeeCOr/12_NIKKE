@@ -103,7 +103,8 @@ public class CombatAdvisorUI : MonoBehaviour {
     private void HandleGameEnded(bool isWin) {
         _hasCombatSignal = true;
         WaveResultSummary summary = CombatAdvisorLogic.GetWaveResultSummary(isWin, _bossHpRatio, _wallHpRatio, _downCount, _reloadingCount);
-        ShowAlert($"{summary.title} {summary.nextAdjustment}", 10f,
+        string cue = string.IsNullOrEmpty(summary.cueLine) ? summary.nextAdjustment : summary.cueLine;
+        ShowAlert($"{summary.title} {cue}", 10f,
             isWin ? new Color(1.0f, 0.85f, 0.18f) : new Color(1.0f, 0.25f, 0.18f));
     }
 

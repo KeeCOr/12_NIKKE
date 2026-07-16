@@ -2,11 +2,16 @@ public struct WaveResultSummary {
     public readonly string title;
     public readonly string reason;
     public readonly string nextAdjustment;
+    public readonly string cueLine;
 
-    public WaveResultSummary(string title, string reason, string nextAdjustment) {
+    public WaveResultSummary(string title, string reason, string nextAdjustment)
+        : this(title, reason, nextAdjustment, string.Empty) { }
+
+    public WaveResultSummary(string title, string reason, string nextAdjustment, string cueLine) {
         this.title = title;
         this.reason = reason;
         this.nextAdjustment = nextAdjustment;
+        this.cueLine = cueLine;
     }
 }
 
@@ -153,14 +158,16 @@ public static class CombatAdvisorLogic {
                 return new WaveResultSummary(
                     "Victory - costly hold.",
                     "The boss fell, but survival pressure nearly broke the line.",
-                    "Next: keep one member on minion cover before committing skills."
+                    "Next: keep one member on minion cover before committing skills.",
+                    "Cue: win was costly; survival cover is the next bottleneck."
                 );
             }
 
             return new WaveResultSummary(
                 "Victory - weak-part focus held.",
                 "Role damage stayed online and the wall survived the push.",
-                "Next: keep one ready shooter on CORE while reloaders rotate."
+                "Next: keep one ready shooter on CORE while reloaders rotate.",
+                "Cue: win came from weak-part uptime; keep one CORE shooter ready."
             );
         }
 
@@ -168,7 +175,8 @@ public static class CombatAdvisorLogic {
             return new WaveResultSummary(
                 "Defeat - squad line collapsed.",
                 $"{FormatMemberCount(downCount)} fell and the wall dropped into breach range.",
-                "Next: split aim lines between minions and boss parts before firing skills."
+                "Next: split aim lines between minions and boss parts before firing skills.",
+                "Cue: survival bottleneck; assign cover role before boss focus."
             );
         }
 
@@ -176,17 +184,22 @@ public static class CombatAdvisorLogic {
             string reason = reloadingCount >= 2
                 ? "The wall held, but boss damage was too low while reloads stacked."
                 : "The wall held, but boss damage was too low for the wave timer.";
+            string cueLine = reloadingCount >= 2
+                ? "Cue: damage bottleneck from stacked reloads; stagger volleys."
+                : "Cue: damage bottleneck; retarget CHEST/CORE earlier.";
             return new WaveResultSummary(
                 "Defeat - damage window missed.",
                 reason,
-                "Next: stagger reloaders and retarget CHEST/CORE before the next volley."
+                "Next: stagger reloaders and retarget CHEST/CORE before the next volley.",
+                cueLine
             );
         }
 
         return new WaveResultSummary(
             "Defeat - final push mistimed.",
             "Boss HP was low, but the squad could not finish before the breach.",
-            "Next: save one skill burst for the exposed CORE phase."
+            "Next: save one skill burst for the exposed CORE phase.",
+            "Cue: timing bottleneck; reserve burst for exposed CORE."
         );
     }
 

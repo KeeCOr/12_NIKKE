@@ -55,6 +55,13 @@ public class CombatAdvisorLogicTests {
     }
 
     [Test]
+    public void WaveResultSummaryCueHighlightsCleanWinRolePlan() {
+        WaveResultSummary summary = CombatAdvisorLogic.GetWaveResultSummary(true, 0.08f, 0.78f, 0, 1);
+
+        Assert.AreEqual("Cue: win came from weak-part uptime; keep one CORE shooter ready.", summary.cueLine);
+    }
+
+    [Test]
     public void WaveResultSummaryExplainsSurvivalFailureFirst() {
         WaveResultSummary summary = CombatAdvisorLogic.GetWaveResultSummary(false, 0.34f, 0.16f, 2, 0);
 
@@ -64,12 +71,26 @@ public class CombatAdvisorLogicTests {
     }
 
     [Test]
+    public void WaveResultSummaryCueHighlightsSurvivalBottleneck() {
+        WaveResultSummary summary = CombatAdvisorLogic.GetWaveResultSummary(false, 0.34f, 0.16f, 2, 0);
+
+        Assert.AreEqual("Cue: survival bottleneck; assign cover role before boss focus.", summary.cueLine);
+    }
+
+    [Test]
     public void WaveResultSummaryCallsOutLowDamageWhenWallIsHealthy() {
         WaveResultSummary summary = CombatAdvisorLogic.GetWaveResultSummary(false, 0.72f, 0.66f, 0, 3);
 
         Assert.AreEqual("Defeat - damage window missed.", summary.title);
         Assert.AreEqual("The wall held, but boss damage was too low while reloads stacked.", summary.reason);
         Assert.AreEqual("Next: stagger reloaders and retarget CHEST/CORE before the next volley.", summary.nextAdjustment);
+    }
+
+    [Test]
+    public void WaveResultSummaryCueHighlightsReloadDamageBottleneck() {
+        WaveResultSummary summary = CombatAdvisorLogic.GetWaveResultSummary(false, 0.72f, 0.66f, 0, 3);
+
+        Assert.AreEqual("Cue: damage bottleneck from stacked reloads; stagger volleys.", summary.cueLine);
     }
 
     [Test]

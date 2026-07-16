@@ -24,7 +24,9 @@ public class ResultUI : MonoBehaviour {
                 : new Color(1.0f, 0.30f, 0.25f);  // red
         }
         if (reasonText != null) {
-            reasonText.text = summary.reason;
+            reasonText.text = string.IsNullOrEmpty(summary.cueLine)
+                ? summary.reason
+                : $"{summary.reason}\n{summary.cueLine}";
             reasonText.color = new Color(0.84f, 0.92f, 1.0f, 0.95f);
         }
         if (nextAdjustmentText != null) {
