@@ -37,18 +37,19 @@ public class AudioManager : MonoBehaviour {
         GameEvents.OnBossDefeated   -= HandleBossDefeated;
     }
 
-    private void HandleFireBullet(BulletData _)  => PlaySfx(sfxGunshot);
-    private void HandleReloadComplete(string _)  => PlaySfx(sfxReload);
-    private void HandleBossAttack()              => PlaySfx(sfxBossAttack);
-    private void HandleBossEnraged()             => PlaySfx(sfxBossEnrage);
-    private void HandleBossDefeated()            => PlaySfx(sfxWin);
+    private void HandleFireBullet(BulletData _)  => PlaySfx(sfxGunshot, RuntimeAudioDirector.CueActionPrimary);
+    private void HandleReloadComplete(string _)  => PlaySfx(sfxReload, RuntimeAudioDirector.CueTransition);
+    private void HandleBossAttack()              => PlaySfx(sfxBossAttack, RuntimeAudioDirector.CueDangerWarning);
+    private void HandleBossEnraged()             => PlaySfx(sfxBossEnrage, RuntimeAudioDirector.CueDangerWarning);
+    private void HandleBossDefeated()            => PlaySfx(sfxWin, RuntimeAudioDirector.CueResultSuccess);
 
-    private void PlaySfx(AudioClip clip) {
+    private void PlaySfx(AudioClip clip, string fallbackCue) {
         if (clip != null && sfxSource != null) sfxSource.PlayOneShot(clip);
+        else RuntimeAudioDirector.PlayCue(fallbackCue);
     }
 
     public void PlayBgm(AudioClip clip) {
-        if (bgmSource == null || clip == null) return;
+        if (bgmSource == null || clip == null) { RuntimeAudioDirector.PlayCue(RuntimeAudioDirector.CueBgmLoop); return; }
         bgmSource.clip = clip;
         bgmSource.loop = true;
         bgmSource.Play();
