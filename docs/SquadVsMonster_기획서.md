@@ -137,3 +137,11 @@
 - **재생**: 브라우저는 사용자 제스처 이후 시작하며 Unity는 Resources 기반 AudioSource로 로드
 - **권장 믹스**: BGM 0.28, SFX 0.70
 - **라이선스**: 각 오디오 자산 폴더에 CC0 고지 보관
+
+## Release / Verification (2026-09-08)
+
+- v1.6.0의 게임 콘텐츠와 버전은 유지했다.
+- 프로젝트 루트와 `release/`의 portable EXE는 일관된 Unity 빌드를 내장하고 해시 기반 임시 캐시에 추출하는 self-contained .NET single-file wrapper로 교체했다.
+- 재사용 가능한 wrapper 소스는 `tools/unity-portable-launcher`에 보존했다(소스와 테스트만, payload 중복 없음).
+- 검증: 격리 폴더에서 실제 창 실행 및 Unity 엔진 초기화를 확인했고, launcher 검증도 통과했다.
+- 산출물: 126,236,308 bytes; SHA-256 `BFBB2EBC8DCCD2B5138E068C1779D57B8970BF45ECC100F5943AED01021749DE`.
