@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  verify:
+    name: Project Structure Verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Unity project structure
+        run: |
+          ls Assets/
+          ls Assets/_Game/Scripts/
+          echo "Unity build requires Unity Hub on a self-hosted runner or Unity Cloud Build."
+          echo "Set up Unity license and use game-ci/unity-builder@v4 for automated builds."
+
+  # To enable Unity Cloud Build:
+  # 1. Add UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD to GitHub Secrets
+  # 2. Uncomment the build job below and push again
+  #
+  # build:
+  #   needs: verify
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: game-ci/unity-builder@v4
+  #       env:
+  #         UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+  #         UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+  #         UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+  #       with:
+  #         targetPlatform: StandaloneWindows64
