@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SquadVsMonster 기획서 v1.6.0</title>
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.65;max-width:980px;margin:0 auto;padding:40px 24px;color:#20242a;background:#fafafa}
+    h1{font-size:34px;margin:0 0 8px} h2{font-size:24px;margin-top:34px;border-bottom:1px solid #ddd;padding-bottom:6px} h3{font-size:18px;margin-top:24px}
+    p,li,pre{font-size:15px} li{margin:5px 0} pre{white-space:pre-wrap;background:#fff;border:1px solid #ddd;border-radius:8px;padding:8px 10px}
+    table{border-collapse:collapse;width:100%;margin:12px 0} th,td{border:1px solid #ddd;padding:8px 12px;text-align:left} th{background:#f5f5f5;font-weight:600}
+    .meta{color:#666;font-size:14px;margin-bottom:32px}
+    .loop-box{background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px 20px;font-size:15px;white-space:pre-wrap;line-height:1.8}
+    .checklist{list-style:none;padding-left:0}
+    .checklist li::before{content:"☐ ";font-size:16px}
+    hr{border:none;border-top:1px solid #ddd;margin:28px 0}
+    blockquote{border-left:4px solid #ddd;margin:0;padding:8px 16px;color:#555;background:#f9f9f9;border-radius:0 8px 8px 0}
+    code{background:#f0f0f0;border-radius:4px;padding:2px 5px;font-size:13px}
+  </style>
+</head>
+<body>
+<h1>SquadVsMonster 기획서 v1.6.0</h1>
+<p>최신화: 2026-07-16 KST</p>
+<h2>문제 정의</h2>
+<p>스쿼드 자동전투와 보스 공략을 좋아하는 플레이어는 전투가 자동으로 진행될수록 “내 조합이 왜 이겼고 왜 졌는지”를 놓치기 쉽다. SquadVsMonster는 짧은 보스전 세션에서 약점 조준, 재장전 타이밍, 생존 커버, 조합 성향을 읽히게 만들어 다음 배치 조정을 바로 떠올리게 하는 Unity 기반 전투 프로토타입이다.</p>
+<h2>한 줄 소개</h2>
+<p>보스 약점과 스쿼드 역할을 읽고, 자동전투 결과를 다음 편성 판단으로 연결하는 세션형 보스 공략 게임.</p>
+<h2>주 페르소나</h2>
+<table>
+  <thead><tr><th>구분</th><th>내용</th></tr></thead>
+  <tbody>
+    <tr><td>이름</td><td>서유나</td></tr>
+    <tr><td>나이 / 직업</td><td>27세 / 모바일 RPG와 자동전투 게임을 병행하는 직장인</td></tr>
+    <tr><td>현재 행동</td><td>전투 결과 화면을 보고 조합, 역할, 약점 타격 성공 여부를 비교한다.</td></tr>
+    <tr><td>사용 맥락</td><td>출퇴근 또는 짧은 휴식 시간에 1~3판을 반복하고, 실패 원인을 빠르게 파악해 다음 조합을 바꾼다.</td></tr>
+    <tr><td>이탈 지점</td><td>패배 원인이 “전투력이 낮음”처럼 뭉뚱그려지거나, HUD가 전투 중 무엇을 해야 하는지 알려주지 않으면 반복 의욕이 떨어진다.</td></tr>
+  </tbody>
+</table>
+<h2>핵심 루프</h2>
+<p>유저가 스쿼드를 편성한다 → 조합 프리뷰로 화력/방어/포지션 성향을 확인한다 → 전투 중 약점과 재장전 상태를 보며 조준을 조정한다 → 결과 화면에서 승패 병목과 다음 조정 포인트를 읽는다 → 다시 스쿼드와 역할을 조정한다.</p>
+<h2>30초 플레이 흐름</h2>
+<table>
+  <thead><tr><th>시점</th><th>플레이어가 보는 것</th><th>기대 판단</th></tr></thead>
+  <tbody>
+    <tr><td>0~5초</td><td>CombatAdvisorHUD의 조합 프리뷰</td><td>이번 조합이 화력형인지, 생존이 얇은지, 사거리 구성이 섞였는지 확인한다.</td></tr>
+    <tr><td>5~20초</td><td>보스 부위 상태, 방벽 압박, 재장전/다운 조언</td><td>CORE/CHEST/LEG/ARM 우선순위를 바꾸고, 준비된 슈터를 약점에 붙인다.</td></tr>
+    <tr><td>20~30초</td><td>승패 결과와 cue line</td><td>패배가 생존/화력/재장전/타이밍 중 어디에서 발생했는지 이해한다.</td></tr>
+  </tbody>
+</table>
+<h2>MVP 가설</h2>
+<table>
+  <thead><tr><th>가설</th><th>검증 방법</th><th>현재 상태</th></tr></thead>
+  <tbody>
+    <tr><td>전투 전 조합 성향을 한 줄로 보여주면 유저가 첫 웨이브 이전에 역할 분담을 이해한다.</td><td><code>GetSquadCompositionPreview</code> 테스트와 HUD 표시 확인</td><td>구현됨, 씬 시각 검증 필요</td></tr>
+    <tr><td>결과 화면에 cue line이 있으면 패배 후 다음 행동이 더 명확해진다.</td><td>승리/생존 실패/화력 실패/타이밍 실패 케이스 테스트</td><td>v1.6.0 구현됨</td></tr>
+    <tr><td>자동전투라도 보스 약점과 재장전 신호가 보이면 수동 개입감이 생긴다.</td><td>CombatAdvisorHUD 플레이 스모크</td><td>부분 검증 필요</td></tr>
+  </tbody>
+</table>
+<h2>레퍼런스 분석</h2>
+<table>
+  <thead><tr><th>레퍼런스</th><th>핵심 행동 단계</th><th>적용 교훈</th></tr></thead>
+  <tbody>
+    <tr><td>승리의 여신: 니케 보스전</td><td>조합 확인 → 약점 조준 → 버스트 타이밍 → 결과 보상</td><td>보스 부위와 역할 판단이 시각적으로 분리되어야 한다.</td></tr>
+    <tr><td>모바일 자동전투 RPG</td><td>편성 → 자동전투 → 결과 → 성장/재편성</td><td>결과 화면은 보상보다 “다음에 뭘 바꿀지”를 먼저 말해야 반복이 산다.</td></tr>
+    <tr><td>로그라이트 보스 러시</td><td>짧은 실패 → 원인 파악 → 즉시 재도전</td><td>실패 원인은 한 줄 cue로 빨리 읽히는 것이 중요하다.</td></tr>
+  </tbody>
+</table>
+<h2>게임 구성과 규칙</h2>
+<table>
+  <thead><tr><th>영역</th><th>규칙</th></tr></thead>
+  <tbody>
+    <tr><td>플랫폼 / 엔진</td><td>Unity 프로젝트가 권위 소스다. 웹/Vite 경로는 임시 프로토타입이 아니면 사용하지 않는다.</td></tr>
+    <tr><td>전투 목표</td><td>보스가 방벽을 무너뜨리기 전에 약점 부위를 파괴하고 체력을 소진한다.</td></tr>
+    <tr><td>조합 프리뷰</td><td>스쿼드 무기 DPS, HP, 사거리, 특수 역할, 약점 우선순위로 Firepower/Defense/Position 라벨을 만든다.</td></tr>
+    <tr><td>전투 중 HUD</td><td>보스 부위 상태, 방벽 위험, 재장전 수, 다운 수를 바탕으로 현재 조언을 표시한다.</td></tr>
+    <tr><td>결과 요약</td><td><code>WaveResultSummary</code>가 title, reason, nextAdjustment, cueLine을 제공한다.</td></tr>
+    <tr><td>패배 유형</td><td>생존 붕괴, 화력 부족, 재장전 겹침, 마무리 타이밍 실패로 나뉜다.</td></tr>
+  </tbody>
+</table>
+<h2>v1.6.0 개선 내용</h2>
+<table>
+  <thead><tr><th>개선</th><th>적용 파일</th><th>효과</th></tr></thead>
+  <tbody>
+    <tr><td>Result cue line</td><td><code>Assets/Scripts/UI/CombatAdvisorLogic.cs</code>, <code>ResultUI.cs</code>, <code>CombatAdvisorUI.cs</code></td><td>승패 결과에서 병목을 한 줄로 다시 강조한다.</td></tr>
+    <tr><td>Squad composition preview</td><td><code>CombatAdvisorLogic.cs</code>, <code>CombatAdvisorUI.cs</code></td><td>전투 시작 전 화력/방어/포지션 판단을 HUD에 보여준다.</td></tr>
+    <tr><td>테스트 케이스 확장</td><td><code>Assets/Tests/EditMode/CombatAdvisorLogicTests.cs</code></td><td>cue line 3종과 조합 프리뷰 3종을 회귀 테스트한다.</td></tr>
+    <tr><td>문서 복구</td><td><code>docs/SquadVsMonster_기획서.<em></code>, <code>docs/SquadVsMonster_업데이트_내역서.</em></code></td><td>현재 구현 상태와 다음 검증 지점을 readable UTF-8로 맞춘다.</td></tr>
+  </tbody>
+</table>
+<h2>구현 상태 매트릭스</h2>
+<table>
+  <thead><tr><th>영역</th><th>상태</th><th>메모</th></tr></thead>
+  <tbody>
+    <tr><td>CombatAdvisorHUD</td><td>구현됨</td><td>보스 약점, 방벽 위협, 재장전/다운 상태 조언을 표시한다.</td></tr>
+    <tr><td>Wave Result Summary</td><td>구현됨</td><td>결과 원인과 다음 조정, cue line을 같은 모델에서 만든다.</td></tr>
+    <tr><td>ResultUI 연결</td><td>구현됨</td><td>reason 아래 cue line을 함께 표시한다.</td></tr>
+    <tr><td>Squad Composition Preview</td><td>구현됨</td><td>편성 배열을 기반으로 조합 성향을 계산한다.</td></tr>
+    <tr><td>ResultUI 시각 검증</td><td>필요</td><td>실제 Unity 씬에서 폰트 크기, 버튼 겹침, 해상도 대응 확인이 필요하다.</td></tr>
+    <tr><td>실행파일 최신성</td><td>검증 후 확정</td><td>Unity BatchMode 빌드 성공 시 v1.6.0 portable로 갱신한다.</td></tr>
+  </tbody>
+</table>
+<h2>UI/HUD/컨트롤 원칙</h2>
+<ul>
+  <li>HUD는 전투 전에는 조합 프리뷰, 전투 중에는 보스/스쿼드 상태 조언을 우선한다.</li>
+  <li>결과 화면은 제목, 원인, cue line, 다음 조정 순서로 읽히게 한다.</li>
+  <li>같은 레이어의 결과 텍스트와 버튼은 겹치지 않아야 한다.</li>
+  <li>긴 cue line이 들어와도 한 줄 또는 두 줄 내에서 읽히도록 폰트 크기와 앵커를 확인한다.</li>
+</ul>
+<h2>VFX/오디오/피드백 커버리지</h2>
+<p>현재 v1.6.0의 핵심 피드백은 텍스트 HUD와 결과 cue다. 다음 시각 개선은 패배 병목별 색상/아이콘을 붙이는 방향이 적합하다. 예를 들어 생존 병목은 방벽 경고, 화력 병목은 약점 마커, 재장전 병목은 탄창/쿨다운 아이콘으로 분리할 수 있다.</p>
+<h2>적용 리소스</h2>
+<table>
+  <thead><tr><th>리소스</th><th>용도</th></tr></thead>
+  <tbody>
+    <tr><td><code>docs/SquadVsMonster_gameplay_preview.png</code></td><td>문서용 플레이 예시 이미지</td></tr>
+    <tr><td><code>docs/SquadVsMonster_01_플레이예시.png</code></td><td>공유용 예시 이미지</td></tr>
+    <tr><td><code>docs/app_icon.png</code></td><td>문서/아이콘 참고 이미지</td></tr>
+    <tr><td><code>Assets/Sprites/Object/Barricade_1.png</code></td><td>전투 방벽 스프라이트</td></tr>
+  </tbody>
+</table>
+<h2>공유용 이미지 미리보기</h2>
+<p><img src="SquadVsMonster_gameplay_preview.png" alt="SquadVsMonster gameplay preview" style="max-width:100%;border-radius:8px"></p>
+<h2>빌드, 테스트, 릴리즈 명령</h2>
+<table>
+  <thead><tr><th>목적</th><th>명령</th></tr></thead>
+  <tbody>
+    <tr><td>EditMode 테스트</td><td><code>Unity.exe -batchmode -quit -projectPath C:\Development\12_NIKKE -executeMethod CommandLineEditModeTestRunner.Run</code></td></tr>
+    <tr><td>Windows 빌드</td><td><code>Unity.exe -batchmode -quit -projectPath C:\Development\12_NIKKE -executeMethod BuildScript.BuildWindowsCLI</code></td></tr>
+    <tr><td>산출물</td><td><code>Build/SquadVsMonster.exe</code>를 기준으로 root/release portable과 Drive 배포본을 갱신한다.</td></tr>
+  </tbody>
+</table>
+<h2>성공 KPI</h2>
+<table>
+  <thead><tr><th>KPI</th><th>목표</th></tr></thead>
+  <tbody>
+    <tr><td>결과 화면에서 다음 조정 포인트를 5초 안에 설명할 수 있는 테스트 플레이어 비율</td><td>70% 이상</td></tr>
+    <tr><td>전투 전 조합 프리뷰를 보고 첫 조준 역할을 말할 수 있는 테스트 플레이어 비율</td><td>70% 이상</td></tr>
+    <tr><td>패배 후 즉시 재도전 또는 조합 변경을 선택하는 비율</td><td>60% 이상</td></tr>
+    <tr><td>ResultUI 텍스트/버튼 겹침 발생 건수</td><td>0건</td></tr>
+  </tbody>
+</table>
+<h2>알려진 리스크와 다음 우선순위</h2>
+<table>
+  <thead><tr><th>우선순위</th><th>항목</th><th>이유</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Unity 씬 시각 스모크</td><td>로직 테스트만으로는 실제 ResultUI 가독성을 보장할 수 없다.</td></tr>
+    <tr><td>2</td><td>병목별 결과 아이콘</td><td>텍스트만으로는 모바일 화면에서 인지 속도가 느릴 수 있다.</td></tr>
+    <tr><td>3</td><td>조합 프리뷰와 실제 전투 결과 비교 로그</td><td>프리뷰가 플레이 결과와 맞는지 데이터로 확인해야 한다.</td></tr>
+    <tr><td>4</td><td>튜토리얼 첫 웨이브</td><td>CORE/CHEST/LEG 역할을 설명하는 초반 학습 장치가 필요하다.</td></tr>
+  </tbody>
+</table>
+
+<section id="unique-improvements-2026-09-18"><h2>2026-09-18 고유 개선 구현 명세</h2><ul><li>편성 역할 카드: 화력·생존·사거리·포지션 장단점을 공통 척도로 표시한다.</li><li>몬스터 상성 프리뷰: 숫자·크기·속성을 기준으로 조합의 유리·주의·취약 이유를 출전 전에 표시한다.</li><li>전투 회고: 가장 기여한 편성 변경과 실패 원인을 화력·전열·사거리·속성 범주로 설명한다.</li></ul><p>Unity 미실행 원칙에 따라 설계·검증 기준으로 반영했으며 런타임 완료로 표기하지 않는다.</p></section>
+<section id="reason-chips-2026-09-21"><h2>2026-09-21 전투 전 편성 이유 칩</h2><ul><li>화력·생존·사거리·포지션 네 이유 칩을 고정 순서로 생성한다.</li><li>기존 CombatAdvisor 단일 텍스트 슬롯을 유지해 씬과 메타 파일은 변경하지 않았다.</li><li>예시 화면: <code>docs/design-references/2026-09-21-squad-reason-chips.png</code></li><li>독립 .NET 9 검사 통과. Unity EditMode·씬 렌더링·빌드/패키징은 미검증.</li></ul></section></body>
+</html>
