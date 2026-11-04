@@ -15,32 +15,76 @@ public struct WaveResultSummary {
     }
 }
 
+public struct SquadReasonChip {
+    public readonly string key;
+    public readonly string label;
+    public readonly string reason;
+
+    public SquadReasonChip(string key, string label, string reason) {
+        this.key = key;
+        this.label = label;
+        this.reason = reason;
+    }
+
+    public string ToHudSegment() {
+        return $"{label}: {reason}";
+    }
+}
+
 public struct SquadCompositionPreview {
     public readonly string firepowerLabel;
     public readonly string firepowerTip;
     public readonly string defenseLabel;
     public readonly string defenseTip;
+    public readonly string rangeLabel;
+    public readonly string rangeTip;
     public readonly string positionLabel;
     public readonly string positionTip;
+    public readonly int readinessScore;
 
     public SquadCompositionPreview(
         string firepowerLabel,
         string firepowerTip,
         string defenseLabel,
         string defenseTip,
+        string rangeLabel,
+        string rangeTip,
         string positionLabel,
-        string positionTip
+        string positionTip,
+        int readinessScore = 0
     ) {
         this.firepowerLabel = firepowerLabel;
         this.firepowerTip = firepowerTip;
         this.defenseLabel = defenseLabel;
         this.defenseTip = defenseTip;
+        this.rangeLabel = rangeLabel;
+        this.rangeTip = rangeTip;
         this.positionLabel = positionLabel;
         this.positionTip = positionTip;
+        this.readinessScore = readinessScore;
+    }
+
+    public SquadReasonChip[] GetReasonChips() {
+        return new[] {
+            new SquadReasonChip("firepower", firepowerLabel, firepowerTip),
+            new SquadReasonChip("survival", defenseLabel.Replace("Defense", "Survival"), defenseTip),
+            new SquadReasonChip("range", rangeLabel, rangeTip),
+            new SquadReasonChip("position", positionLabel, positionTip),
+        };
+    }
+
+    // Four short chip labels plus only the most urgent reason, so the line stays scannable.
+    public string ToHudLabels() {
+        SquadReasonChip[] chips = GetReasonChips();
+        return $"{chips[0].label} / {chips[1].label} / {chips[2].label} / {chips[3].label}";
     }
 
     public string ToHudLine() {
-        return $"{firepowerLabel}: {firepowerTip}  |  {defenseLabel}: {defenseTip}  |  {positionLabel}: {positionTip}";
+        SquadReasonChip[] chips = GetReasonChips();
+        string tip = defenseLabel == "Defense C" ? defenseTip
+            : firepowerLabel == "Firepower C" ? firepowerTip
+            : positionTip;
+        return $"Ready {readinessScore}/100  |  {chips[0].label} / {chips[1].label} / {chips[2].label} / {chips[3].label}  |  {tip}";
     }
 }
 
@@ -75,6 +119,7 @@ public static class CombatAdvisorLogic {
             return new SquadCompositionPreview(
                 "Firepower C", "No squad data: confirm deployed members.",
                 "Defense C", "No squad data: survival risk unknown.",
+                "Range Unknown", "No weapon range data: confirm deployed members.",
                 "Position Unknown", "No aim plan: assign roles before wave start."
             );
         }
@@ -103,9 +148,7 @@ public static class CombatAdvisorLogic {
             if (range > maxRange) maxRange = range;
 
             if (TargetsPart(config, "CORE") || TargetsPart(config, "CHEST")) targetsCoreOrChest = true;
-            if (config.special == SpecialType.WeakpointBonus || config.special == SpecialType.BurstAccuracy || config.special == SpecialType.WeakpointMark) {
-                hasWeakPartSpecial = true;
-            }
+            if (IsWeakPartSpecial(config.special)) hasWeakPartSpecial = true;
             if (config.special == SpecialType.CloseSplash || config.special == SpecialType.RocketSplash) {
                 hasCloseControl = true;
             }
@@ -115,6 +158,7 @@ public static class CombatAdvisorLogic {
             return new SquadCompositionPreview(
                 "Firepower C", "No squad data: confirm deployed members.",
                 "Defense C", "No squad data: survival risk unknown.",
+                "Range Unknown", "No weapon range data: confirm deployed members.",
                 "Position Unknown", "No aim plan: assign roles before wave start."
             );
         }
@@ -124,7 +168,14 @@ public static class CombatAdvisorLogic {
         string firepowerLabel = averageDps >= 28f ? "Firepower A" : averageDps >= 18f ? "Firepower B" : "Firepower C";
         string defenseLabel = averageHp >= 800f ? "Defense A" : averageHp >= 600f ? "Defense B" : "Defense C";
         bool mixedRange = maxRange - minRange >= 10f;
-        string positionLabel = mixedRange ? "Position Mixed" : maxRange >= 16f ? "Position Long" : "Position Close";
+        string rangeLabel = mixedRange ? "Range Mixed" : maxRange >= 16f ? "Range Long" : "Range Close";
+        string positionLabel = mixedRange && targetsCoreOrChest
+            ? "Position Split"
+            : targetsCoreOrChest
+                ? "Position Focus"
+                : hasCloseControl
+                    ? "Position Screen"
+                    : "Position Flexible";
 
         string firepowerTip = firepowerLabel == "Firepower A" && hasWeakPartSpecial && targetsCoreOrChest
             ? "Weak-part burst squad: open CHEST/CORE early."
@@ -138,15 +189,91 @@ public static class CombatAdvisorLogic {
                 ? "Stable line: avoid stacking all members on boss parts."
                 : "Durable line: can hold longer boss-part focus windows.";
 
+        string rangeTip = mixedRange
+            ? "Mixed ranges: assign front and back lanes before combat."
+            : rangeLabel == "Range Long"
+                ? "Long range: preserve distance while parts are exposed."
+                : "Close range: prepare cover before breach pressure.";
+
         string positionTip = mixedRange && targetsCoreOrChest
             ? "Mixed range: front slots cover minions while long range marks CORE."
-            : positionLabel == "Position Long"
-                ? "Long range: keep backline on weak parts before the boss closes."
+            : targetsCoreOrChest
+                ? "Weak-part focus: keep one cover role while CORE shooters commit."
                 : hasCloseControl
-                    ? "Close control: let splash users screen minions near the wall."
-                    : "Compact range: move aim markers early before breach pressure.";
+                    ? "Front screen: let splash users intercept minions near the wall."
+                    : "Flexible roles: assign one cover lane before wave start.";
 
-        return new SquadCompositionPreview(firepowerLabel, firepowerTip, defenseLabel, defenseTip, positionLabel, positionTip);
+        int readinessScore = 35;
+        readinessScore += firepowerLabel == "Firepower A" ? 25 : firepowerLabel == "Firepower B" ? 16 : 8;
+        readinessScore += defenseLabel == "Defense A" ? 20 : defenseLabel == "Defense B" ? 13 : 6;
+        if (targetsCoreOrChest) readinessScore += 10;
+        if (hasWeakPartSpecial || hasCloseControl) readinessScore += 10;
+        readinessScore = readinessScore > 100 ? 100 : readinessScore;
+        return new SquadCompositionPreview(
+            firepowerLabel, firepowerTip,
+            defenseLabel, defenseTip,
+            rangeLabel, rangeTip,
+            positionLabel, positionTip,
+            readinessScore
+        );
+    }
+
+    // Minions per second from the real WaveSystem phase table: average spawn count / interval.
+    private const float LightPressureRate = 0.6f;
+    private const float RisingPressureRate = 1.5f;
+    private const float HeavyPressureRate = 2.5f;
+
+    public static string GetWavePressureAdvice(WaveSystem.PhaseParams phase, SquadMemberConfigSO[] squadConfigs, bool isUpcoming,
+        System.Collections.Generic.ISet<string> downMemberIds = null) {
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        float interval = phase.interval > 0f ? phase.interval : 1f;
+        float rate = (phase.countMin + phase.countMax) * 0.5f / interval;
+        string tier = rate < LightPressureRate ? "Light"
+            : rate < RisingPressureRate ? "Rising"
+            : rate < HeavyPressureRate ? "Heavy"
+            : "Swarm";
+
+        bool berserkerLeads = phase.berserkerW >= phase.spitterW;
+        float threatWeight = berserkerLeads ? phase.berserkerW : phase.spitterW;
+        float totalWeight = phase.runnerW + phase.berserkerW + phase.spitterW;
+        string threat = threatWeight > 0f && totalWeight > 0f
+            ? string.Format(inv, " ({0} {1:0}%)", berserkerLeads ? "Berserker" : "Spitter", threatWeight / totalWeight * 100f)
+            : string.Empty;
+
+        string pressure = string.Format(inv, "{0} {1} {2}-{3}/{4:0.#}s{5}",
+            isUpcoming ? "Next:" : "Now:", tier, phase.countMin, phase.countMax, interval, threat);
+        return $"{pressure} - {GetPressureRoleTip(tier, squadConfigs, downMemberIds)}";
+    }
+
+    private static string GetPressureRoleTip(string tier, SquadMemberConfigSO[] squadConfigs,
+        System.Collections.Generic.ISet<string> downMemberIds) {
+        string splash = null;
+        string cover = null;
+        string first = null;
+        if (squadConfigs != null) {
+            for (int i = 0; i < squadConfigs.Length; i++) {
+                var config = squadConfigs[i];
+                if (config == null || (downMemberIds != null && downMemberIds.Contains(config.id))) continue;
+                string name = string.IsNullOrEmpty(config.label) ? config.id : config.label;
+                if (first == null) first = name;
+                bool hasSplash = config.weapon != null && config.weapon.splashRadius > 0f
+                    && (config.special != SpecialType.RocketSplash || config.specialVal > 0f);
+                if (splash == null && hasSplash) splash = name;
+                if (cover == null && !IsWeakPartSpecial(config.special)) cover = name;
+            }
+        }
+
+        if (first == null) return "assign a cover lane before it lands.";
+        if (tier == "Light") return "all aim lines on boss parts.";
+        if (splash != null) return $"{splash} splash screens wall, rest on parts.";
+        string coverName = cover ?? first;
+        return tier == "Swarm"
+            ? $"no splash: {coverName} + one more on minions."
+            : $"no splash: {coverName} covers minions.";
+    }
+
+    private static bool IsWeakPartSpecial(SpecialType special) {
+        return special == SpecialType.WeakpointBonus || special == SpecialType.BurstAccuracy || special == SpecialType.WeakpointMark;
     }
 
     public static WaveResultSummary GetWaveResultSummary(bool isWin, float bossHpRatio, float wallHpRatio, int downCount, int reloadingCount) {

@@ -43,4 +43,25 @@ public class WavePhaseTests {
         Assert.AreEqual(2.0f, phase.interval);
         Assert.AreEqual(5, phase.countMin);
     }
+
+    [Test]
+    public void GetPressurePreview_FlagsNextPhaseInsideLookahead() {
+        var preview = WaveSystem.GetPressurePreview(8f, false, out bool isUpcoming);
+        Assert.IsTrue(isUpcoming);
+        Assert.IsTrue(preview.SameAs(WaveSystem.GetPhaseParams(12f, false)));
+    }
+
+    [Test]
+    public void GetPressurePreview_ReturnsCurrentPhaseWhenNoChangeIsNear() {
+        var preview = WaveSystem.GetPressurePreview(13f, false, out bool isUpcoming);
+        Assert.IsFalse(isUpcoming);
+        Assert.IsTrue(preview.SameAs(WaveSystem.GetPhaseParams(13f, false)));
+    }
+
+    [Test]
+    public void GetPressurePreview_EnragedIsAlwaysCurrent() {
+        var preview = WaveSystem.GetPressurePreview(3f, true, out bool isUpcoming);
+        Assert.IsFalse(isUpcoming);
+        Assert.AreEqual(2.0f, preview.interval);
+    }
 }

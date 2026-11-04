@@ -1,6 +1,6 @@
-# SquadVsMonster 기획서 v1.6.0
+# SquadVsMonster 기획서 v1.7.1 preview
 
-최신화: 2026-07-16 KST
+최신화: 2026-11-04 KST
 
 ## 문제 정의
 
@@ -145,3 +145,36 @@
 - 재사용 가능한 wrapper 소스는 `tools/unity-portable-launcher`에 보존했다(소스와 테스트만, payload 중복 없음).
 - 검증: 격리 폴더에서 실제 창 실행 및 Unity 엔진 초기화를 확인했고, launcher 검증도 통과했다.
 - 산출물: 126,236,308 bytes; SHA-256 `BFBB2EBC8DCCD2B5138E068C1779D57B8970BF45ECC100F5943AED01021749DE`.
+
+## 2026-11-04 / v1.7.1 preview — 웨이브 압박과 담당 역할
+
+- 원본 선택: GitHub master `467574f`(v1.7.0)를 기준으로 `D:/CodexBuilds/workspaces/12_NIKKE-matchup`에 격리했다. 복원 `33c6e15`(v1.6.0)의 네 가지 편성 이유 칩만 이식했다. master의 오디오·결과·출시 자료는 유지한다. 두 스냅샷의 버전/날짜가 어긋나므로 이번 결과는 preview이며 과거 배포본과 동일하다고 보지 않는다.
+- 화력·생존·사거리·포지션의 짧은 라벨과 가장 우선할 이유 하나를 기존 CombatAdvisor 텍스트에 표시한다. 별도 편성 화면을 새로 만든 것은 아니다. 시작 직후 전투 신호/웨이브 알림이 들어오면 전투 조언으로 전환된다.
+- 실제 `WaveSystem.GetPhaseParams`의 출현 수·간격·적 비중에서 현재 압박과 5초 이내 다음 단계 예고를 만든다. 광역 사격 담당은 실제 무기의 splashRadius와 생존 여부를 확인하고, 없으면 일반 엄호 담당을 제시한다. 속성·가상의 적 크기 상성을 추가하지 않았다.
+- 전사·분노·결과 알림이 압박 예고보다 우선한다. 예고는 5초 표시 후 기존 보스/분대 조언으로 복귀한다. 자동 배치나 공격/소환 수치의 변경은 없다.
+- 재미 가설: 웨이브가 바뀌기 전에 누가 잡몹을 막을지 결정하기 쉬워진다. 반증 조건: 예고가 읽히지 않거나 실제 전사자를 추천하거나 기존 경고를 가리는 경우에는 채택하지 않고 표시량/우선순위를 수정한다. 실제 참여자 테스트와 재미 검증은 아직 하지 않았다.
+- 담당: Claude가 초기 구현/테스트를 작성했고 세션 한도(18:20 KST 재설정)로 중단했다. Codex가 검토·실제 무기/전사자 회귀 보완·검증·일반 기획서/수정 이력을 이어받았다. 이후 사용자 별도 승인으로 GDD MD/HTML도 Codex가 실제 구현·검증 사실만 보충했다.
+- 실행: `node scripts/package-unity.cjs`. Unity 2022.3.62f3로 로컬 Windows 빌드를 만들고 공통 배치기로 `D:/CodexOutputs/SquadVsMonster/SquadVsMonster.exe`에 배치한다. `_Data`, `UnityPlayer.dll` 등 엔진 보조 파일을 함께 유지해야 한다. 단일 파일 portable wrapper가 아니다. root/release/Drive에 중복 EXE를 만들지 않는다.
+- 검증 현황은 아래 실행 결과 보충에 기록한다. 과거 테스트 통과를 이번 실행 통과로 갱신하지 않는다.
+
+### 2026-11-04 실행 검증 보충
+
+- Unity 2022.3.62f3 EditMode: 기준 50/50, 개선 후 최종 62/62 통과. 최종 결과: `D:/CodexBuilds/tasks/12-matchup-20261104/editmode-verified.xml`. 압박 단계 예고·광역 부재·전사자 제외·실제 HUD 이벤트 바인딩/긴급 알림 우선순위를 검사했다.
+- UI 회귀 테스트 하네스에서 일반 MonoBehaviour의 EditMode lifecycle 자동 호출을 가정한 실패를 고쳤다. 테스트는 명시적으로 구독/해제하고 제품 런타임의 lifecycle은 유지한다.
+- 현재 일반 HUD는 첫 줄에 네 편성 라벨, 둘째 줄에 압박 예고 또는 우선 행동 하나를 유지한다. 전사 직후 남은 예고도 다시 계산해 죽은 담당이 알림 종료 후 다시 추천되지 않게 했다.
+- `node --check scripts/package-unity.cjs`, `git diff --check`: 통과. Windows 빌드·실제 창 QA 결과는 완료 후 별도 기입한다.
+- 실제 참여자 테스트, 장기 전투 밸런스, 출시/시장성 검증은 미실행이다.
+
+### 2026-11-04 Windows 빌드 확인
+
+- `node scripts/package-unity.cjs`: Unity Windows 빌드 종료 코드 0, 공통 배치 및 SHA-256 재확인 통과.
+- 최종 실행파일: `D:/CodexOutputs/SquadVsMonster/SquadVsMonster.exe`, v1.7.1 preview, SHA-256 `f5f73d8616a2500e0fb0223d83774e2d7f6a74c1bbdad772f4fefc9bf5812036`.
+- 실제 실행에서 Unity 2022.3.62f3/Direct3D 11/게임 어셈블리 초기화 확인. `player.log`의 Exception/NullReference는 0건이다. 화면 가독성과 조작 QA는 별도 결과를 기다린다.
+- npm 프로젝트가 아니므로 npm audit 대상은 없다. 신규 패키지·SDK·유료 리소스를 설치하지 않았다. 기존 RuntimeAudioDirector와 오디오 권리 고지를 유지했다.
+
+### 2026-11-04 최종 화면 확인과 남은 제한
+
+- 부모 작업이 최종 EXE의 실제 1280×720 화면에서 `Firepower A / Survival C / Range Long / Position Focus` 첫 줄과 `Next: Light 1-2/5.5s` 및 보스 부위 조준 안내 둘째 줄이 HUD 안에 겹침 없이 표시되는 것을 확인했다.
+- 입력을 이어가기 전에 CUA가 창 소실/foreground PID 오류를 반복 보고했다. 셸 Wait-Process 및 CUA 직접 실행도 안정적인 후속 조작을 확보하지 못했다. 로그는 정상 종료이며 예외는 없지만 종료 원인은 확정하지 못했다. 이를 게임 충돌로 단정하지 않는다.
+- 검증 판정: Unity 62/62, Windows 빌드, 엔진 초기화, 초기 화면 표시 통과. 실제 조준·웨이브 진행·결과·재시작을 포함한 대화형 종단 간 검증은 부분 검증이다. 단위 테스트 통과와 초기 화면 확인을 전체 플레이 완료로 보고하지 않는다.
+- 사용자 확인 한 단계: `D:/CodexOutputs/SquadVsMonster/SquadVsMonster.exe`를 열어 상단 네 편성 라벨과 다음 압박 안내가 보이는지 확인한다. `_Data`와 엔진 DLL은 같은 폴더에 유지한다.

@@ -123,8 +123,141 @@ public class CombatAdvisorLogicTests {
             MakeMember("Long", 760, 15f, 2.5f, 5, 1.5f, 22f, SpecialType.WeakpointMark, 1.0f, "CORE"),
         });
 
-        Assert.AreEqual("Position Mixed", preview.positionLabel);
+        Assert.AreEqual("Position Split", preview.positionLabel);
         Assert.AreEqual("Mixed range: front slots cover minions while long range marks CORE.", preview.positionTip);
+    }
+
+    [Test]
+    public void SquadCompositionPreviewBuildsFourScanFriendlyReasonChips() {
+        var preview = CombatAdvisorLogic.GetSquadCompositionPreview(new[] {
+            MakeMember("Close", 800, 16f, 2.0f, 5, 1.5f, 7f, SpecialType.CloseSplash, 1.0f, "ARM_L"),
+            MakeMember("Long", 760, 15f, 2.5f, 5, 1.5f, 22f, SpecialType.WeakpointMark, 1.0f, "CORE"),
+        });
+
+        SquadReasonChip[] chips = preview.GetReasonChips();
+
+        Assert.AreEqual(4, chips.Length);
+        Assert.AreEqual("firepower", chips[0].key);
+        Assert.AreEqual("survival", chips[1].key);
+        Assert.AreEqual("range", chips[2].key);
+        Assert.AreEqual("Range Mixed", chips[2].label);
+        Assert.AreEqual("position", chips[3].key);
+        Assert.AreEqual("Position Split", chips[3].label);
+        StringAssert.Contains("Ready", preview.ToHudLine());
+    }
+
+    [Test]
+    public void SquadCompositionHudLineShowsChipLabelsAndOneWeakestTip() {
+        var preview = CombatAdvisorLogic.GetSquadCompositionPreview(new[] {
+            MakeMember("Glass", 420, 20f, 2.0f, 4, 2.2f, 18f, SpecialType.WeakpointBonus, 1.2f, "CORE"),
+            MakeMember("Scout", 450, 10f, 4.0f, 8, 1.6f, 10f, SpecialType.None, 0f, "HEAD"),
+        });
+
+        string line = preview.ToHudLine();
+
+        StringAssert.Contains("Survival C", line);
+        StringAssert.Contains(preview.defenseTip, line);
+        StringAssert.DoesNotContain(preview.rangeTip, line);
+    }
+
+    [Test]
+    public void WavePressureAdviceKeepsSquadOnPartsDuringLightRunnerPhase() {
+        string advice = CombatAdvisorLogic.GetWavePressureAdvice(WaveSystem.GetPhaseParams(0f, false), RealLikeSquad(), true);
+
+        Assert.AreEqual("Next: Light 1-1/4s - all aim lines on boss parts.", advice);
+    }
+
+    [Test]
+    public void WavePressureAdviceAssignsSplashMemberToHeavyBerserkerPhase() {
+        string advice = CombatAdvisorLogic.GetWavePressureAdvice(WaveSystem.GetPhaseParams(50f, false), RealLikeSquad(), false);
+
+        Assert.AreEqual("Now: Heavy 4-8/3s (Berserker 30%) - Delta splash screens wall, rest on parts.", advice);
+    }
+
+    [Test]
+    public void WavePressureAdviceAsksForTwoCoverLinesWhenSwarmHasNoSplash() {
+        var squad = new[] {
+            MakeMember("Alpha", 90, 120f, 1f, 1, 2f, 0f, SpecialType.WeakpointBonus, 2f, "CORE"),
+            MakeMember("Charlie", 100, 18f, 4f, 20, 2f, 12f, SpecialType.None, 1f, "HEAD"),
+        };
+
+        string advice = CombatAdvisorLogic.GetWavePressureAdvice(WaveSystem.GetPhaseParams(70f, false), squad, true);
+
+        Assert.AreEqual("Next: Swarm 6-10/2.5s (Berserker 35%) - no splash: Charlie + one more on minions.", advice);
+    }
+
+    [Test]
+    public void WavePressureAdviceWithoutSquadDataStillReportsPressure() {
+        string advice = CombatAdvisorLogic.GetWavePressureAdvice(WaveSystem.GetPhaseParams(30f, false), null, true);
+
+        Assert.AreEqual("Next: Rising 2-4/4.5s (Berserker 15%) - assign a cover lane before it lands.", advice);
+    }
+
+    [Test]
+    public void WavePressureAdviceDoesNotAssignFallenSplashMember() {
+        var squad = RealLikeSquad();
+        squad[1].id = "delta";
+        var down = new System.Collections.Generic.HashSet<string> { "delta" };
+        string advice = CombatAdvisorLogic.GetWavePressureAdvice(WaveSystem.GetPhaseParams(50f, false), squad, false, down);
+        StringAssert.DoesNotContain("Delta splash", advice);
+        StringAssert.Contains("no splash", advice);
+    }
+
+    [Test]
+    public void WavePressureAdviceChecksWeaponRadiusInsteadOfSpecialName() {
+        var squad = RealLikeSquad();
+        squad[1].weapon.splashRadius = 0f;
+        string advice = CombatAdvisorLogic.GetWavePressureAdvice(WaveSystem.GetPhaseParams(50f, false), squad, false);
+        StringAssert.Contains("no splash", advice);
+    }
+
+    [Test]
+    public void AdvisorKeepsCompositionVisibleAndRefreshesFallenRoleBehindAlert() {
+        var panel = new UnityEngine.GameObject("Advisor test");
+        var textObject = new UnityEngine.GameObject("Advisor text", typeof(UnityEngine.RectTransform));
+        var squad = RealLikeSquad();
+        squad[1].id = "delta";
+        try {
+            var text = textObject.AddComponent<UnityEngine.UI.Text>();
+            var advisor = panel.AddComponent<CombatAdvisorUI>();
+            advisor.Bind(text, null);
+            advisor.BindSquadComposition(squad);
+            // EditMode does not run the player lifecycle for this component automatically.
+            InvokeAdvisor(advisor, "OnDisable");
+            InvokeAdvisor(advisor, "OnEnable");
+            GameEvents.RaiseWavePressureChanged(WaveSystem.GetPhaseParams(50f, false), false);
+            StringAssert.StartsWith("Firepower", text.text);
+            StringAssert.Contains("\nNow: Heavy", text.text);
+            StringAssert.Contains("Delta splash", text.text);
+            GameEvents.RaiseMemberDied("delta");
+            StringAssert.Contains("DELTA down", text.text);
+            typeof(CombatAdvisorUI).GetField("_alertUntil", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .SetValue(advisor, -1f);
+            InvokeAdvisor(advisor, "Update");
+            StringAssert.StartsWith("Firepower", text.text);
+            StringAssert.Contains("no splash", text.text);
+            StringAssert.DoesNotContain("Delta splash", text.text);
+        } finally {
+            var advisor = panel.GetComponent<CombatAdvisorUI>();
+            if (advisor != null) InvokeAdvisor(advisor, "OnDisable");
+            UnityEngine.Object.DestroyImmediate(panel);
+            UnityEngine.Object.DestroyImmediate(textObject);
+            foreach (var member in squad) UnityEngine.Object.DestroyImmediate(member);
+        }
+    }
+
+    private static void InvokeAdvisor(CombatAdvisorUI advisor, string method) {
+        typeof(CombatAdvisorUI).GetMethod(method, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(advisor, null);
+    }
+
+    private static SquadMemberConfigSO[] RealLikeSquad() {
+        var squad = new[] {
+            MakeMember("Alpha", 90, 120f, 1f, 1, 2f, 0f, SpecialType.WeakpointBonus, 2f, "CORE", "HEAD"),
+            MakeMember("Delta", 130, 90f, 1f, 2, 2f, 15f, SpecialType.RocketSplash, 1.8f, "CHEST", "CORE"),
+            MakeMember("Echo", 80, 280f, 1f, 1, 2f, 16f, SpecialType.WeakpointMark, 1.4f, "CORE"),
+        };
+        squad[1].weapon.splashRadius = 150f;
+        return squad;
     }
 
     private static SquadMemberConfigSO MakeMember(

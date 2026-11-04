@@ -21,11 +21,22 @@ public class WaveSystem : MonoBehaviour {
         public float interval;
         public int countMin, countMax;
         public float runnerW, berserkerW, spitterW;
+
+        public bool SameAs(PhaseParams other) {
+            return interval == other.interval && countMin == other.countMin && countMax == other.countMax
+                && runnerW == other.runnerW && berserkerW == other.berserkerW && spitterW == other.spitterW;
+        }
     }
+
+    // Seconds of warning the HUD gets before the spawn table steps up.
+    public const float PressureLookahead = 5f;
 
     private float _elapsed;
     private float _spawnTimer = 1.5f; // short delay so first runner appears quickly
     private bool  _isEnraged;
+    private bool  _hasRaisedPressure;
+    private bool  _lastPressureUpcoming;
+    private PhaseParams _lastPressure;
 
     // Stored method references — avoids the anonymous-lambda subscribe/unsubscribe leak
     void OnEnable()  => GameEvents.OnBossEnraged += HandleBossEnraged;
@@ -38,6 +49,7 @@ public class WaveSystem : MonoBehaviour {
 
     void Update() {
         _elapsed += Time.deltaTime;
+        RaisePressureIfChanged();
         _spawnTimer -= Time.deltaTime;
         if (_spawnTimer <= 0f) {
             var p = GetPhaseParams(_elapsed, _isEnraged);
@@ -56,6 +68,23 @@ public class WaveSystem : MonoBehaviour {
         if (elapsed < 45f)  return new PhaseParams { interval=3.5f,  countMin=4,  countMax=6,  runnerW=60, berserkerW=25, spitterW=15 };
         if (elapsed < 60f)  return new PhaseParams { interval=3.0f,  countMin=4,  countMax=8,  runnerW=50, berserkerW=30, spitterW=20 };
         return               new PhaseParams { interval=2.5f,  countMin=6,  countMax=10, runnerW=40, berserkerW=35, spitterW=25 };
+    }
+
+    // Upcoming phase if it starts within PressureLookahead, otherwise the current phase.
+    public static PhaseParams GetPressurePreview(float elapsed, bool enraged, out bool isUpcoming) {
+        var current = GetPhaseParams(elapsed, enraged);
+        var next = GetPhaseParams(elapsed + PressureLookahead, enraged);
+        isUpcoming = !next.SameAs(current);
+        return isUpcoming ? next : current;
+    }
+
+    private void RaisePressureIfChanged() {
+        var preview = GetPressurePreview(_elapsed, _isEnraged, out bool isUpcoming);
+        if (_hasRaisedPressure && isUpcoming == _lastPressureUpcoming && preview.SameAs(_lastPressure)) return;
+        _hasRaisedPressure = true;
+        _lastPressureUpcoming = isUpcoming;
+        _lastPressure = preview;
+        GameEvents.RaiseWavePressureChanged(preview, isUpcoming);
     }
 
     private void Spawn(PhaseParams p) {

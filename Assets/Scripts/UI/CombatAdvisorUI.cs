@@ -8,6 +8,7 @@ public class CombatAdvisorUI : MonoBehaviour {
 
     private string _bossTip = CombatAdvisorLogic.DefaultBossTip;
     private string _compositionPreview;
+    private string _compositionLabels;
     private bool _hasCombatSignal;
     private int _reloadingCount;
     private int _downCount;
@@ -15,6 +16,13 @@ public class CombatAdvisorUI : MonoBehaviour {
     private float _wallHpRatio = 1f;
     private float _alertUntil;
     private string _alertText;
+    private float _noticeUntil;
+    private string _noticeText;
+    private readonly System.Collections.Generic.HashSet<string> _downMemberIds = new System.Collections.Generic.HashSet<string>();
+    private WaveSystem.PhaseParams _noticePhase;
+    private bool _noticeUpcoming;
+
+    private const float PressureNoticeSeconds = 5f;
 
     public void Bind(Text text, Image accent) {
         bodyText = text;
@@ -24,7 +32,9 @@ public class CombatAdvisorUI : MonoBehaviour {
 
     public void BindSquadComposition(SquadMemberConfigSO[] configs) {
         squadConfigs = configs;
-        _compositionPreview = CombatAdvisorLogic.GetSquadCompositionPreview(squadConfigs).ToHudLine();
+        var preview = CombatAdvisorLogic.GetSquadCompositionPreview(squadConfigs);
+        _compositionPreview = preview.ToHudLine();
+        _compositionLabels = preview.ToHudLabels();
         Refresh();
     }
 
@@ -37,8 +47,11 @@ public class CombatAdvisorUI : MonoBehaviour {
         GameEvents.OnMemberDied += HandleMemberDied;
         GameEvents.OnBossEnraged += HandleBossEnraged;
         GameEvents.OnGameEnded += HandleGameEnded;
+        GameEvents.OnWavePressureChanged += HandleWavePressureChanged;
         if (string.IsNullOrEmpty(_compositionPreview) && squadConfigs != null && squadConfigs.Length > 0) {
-            _compositionPreview = CombatAdvisorLogic.GetSquadCompositionPreview(squadConfigs).ToHudLine();
+            var preview = CombatAdvisorLogic.GetSquadCompositionPreview(squadConfigs);
+            _compositionPreview = preview.ToHudLine();
+            _compositionLabels = preview.ToHudLabels();
         }
         Refresh();
     }
@@ -52,11 +65,16 @@ public class CombatAdvisorUI : MonoBehaviour {
         GameEvents.OnMemberDied -= HandleMemberDied;
         GameEvents.OnBossEnraged -= HandleBossEnraged;
         GameEvents.OnGameEnded -= HandleGameEnded;
+        GameEvents.OnWavePressureChanged -= HandleWavePressureChanged;
     }
 
     void Update() {
         if (!string.IsNullOrEmpty(_alertText) && Time.time > _alertUntil) {
             _alertText = null;
+            Refresh();
+        }
+        if (!string.IsNullOrEmpty(_noticeText) && Time.time > _noticeUntil) {
+            _noticeText = null;
             Refresh();
         }
     }
@@ -91,6 +109,10 @@ public class CombatAdvisorUI : MonoBehaviour {
 
     private void HandleMemberDied(string memberId) {
         _hasCombatSignal = true;
+        _downMemberIds.Add(memberId);
+        if (!string.IsNullOrEmpty(_noticeText)) {
+            _noticeText = CombatAdvisorLogic.GetWavePressureAdvice(_noticePhase, squadConfigs, _noticeUpcoming, _downMemberIds);
+        }
         _downCount++;
         ShowAlert($"{memberId.ToUpperInvariant()} down - protect the wall!", 3.0f, new Color(1.0f, 0.25f, 0.18f));
     }
@@ -108,6 +130,15 @@ public class CombatAdvisorUI : MonoBehaviour {
             isWin ? new Color(1.0f, 0.85f, 0.18f) : new Color(1.0f, 0.25f, 0.18f));
     }
 
+    // Pressure notices sit below alerts: they never replace an active member-down/enrage/result alert.
+    private void HandleWavePressureChanged(WaveSystem.PhaseParams phase, bool isUpcoming) {
+        _noticePhase = phase;
+        _noticeUpcoming = isUpcoming;
+        _noticeText = CombatAdvisorLogic.GetWavePressureAdvice(phase, squadConfigs, isUpcoming, _downMemberIds);
+        _noticeUntil = Time.time + PressureNoticeSeconds;
+        Refresh();
+    }
+
     private void ShowAlert(string text, float seconds, Color accent) {
         _alertText = text;
         _alertUntil = Time.time + seconds;
@@ -120,10 +151,12 @@ public class CombatAdvisorUI : MonoBehaviour {
         string squadTip = CombatAdvisorLogic.GetSquadTip(_reloadingCount, _downCount);
         if (!string.IsNullOrEmpty(_alertText)) {
             bodyText.text = _alertText;
+        } else if (!string.IsNullOrEmpty(_noticeText)) {
+            bodyText.text = WithCompositionLabels(_noticeText);
         } else if (!_hasCombatSignal && !string.IsNullOrEmpty(_compositionPreview)) {
             bodyText.text = _compositionPreview;
         } else {
-            bodyText.text = $"{_bossTip}  |  {squadTip}";
+            bodyText.text = WithCompositionLabels(_reloadingCount > 0 || _downCount > 0 ? squadTip : _bossTip);
         }
 
         if (accentImage != null && string.IsNullOrEmpty(_alertText)) {
@@ -131,5 +164,9 @@ public class CombatAdvisorUI : MonoBehaviour {
                 ? new Color(1.0f, 0.55f, 0.10f, 0.90f)
                 : new Color(0.35f, 0.70f, 1.0f, 0.90f);
         }
+    }
+
+    private string WithCompositionLabels(string advice) {
+        return string.IsNullOrEmpty(_compositionLabels) ? advice : $"{_compositionLabels}\n{advice}";
     }
 }
