@@ -1,5 +1,34 @@
 # SquadVsMonster
 
+<!-- PORTFOLIO-GDD-20261104:START -->
+## 2026-11-04 구현 대조 및 GDD 현행화
+
+- **현재 제품 정의**: 고정5인 분대의 약점 조준·재장전·엄호 역할을 읽으며 보스를 공략하는 Unity전투 프로토타입.
+- **핵심 경험 / 흐름**: 5인 역할/HUD확인 → 보스부위 조준·잡몹엄호 → 출현압박/재장전 대응 → 승패병목 회고 → 재시도.
+- **이번 확인 소스**: D:\CodexBuilds\workspaces\12_NIKKE-matchup
+- **소스 버전**: 1.7.1
+- **확인 시 Git 기준**: codex/squad-matchup-20261104 / e3ec959dd8060f2791774204cd5f3fd325a77004
+- **현재 작업 상태**: 커밋되지 않은 변경 있음. 완료·원격 반영과 구분한다.
+- **이번 검증 범위**: 2026-11-04 문서·선택 소스·Git 메타데이터 읽기 확인. 제품 테스트·빌드 재실행 없음. 과거 PASS 날짜를 오늘로 갱신하지 않음.
+- **구현 / 문서 근거 [previous_task_directly_verified]**: v1.7.1 preview는 master467574f를 보존하고 복원33c6e15의4역할 라벨만 제한 이식한 작업본이다.
+- **근거 파일**: D:/CodexBuilds/workspaces/12_NIKKE-matchup/docs/SquadVsMonster_GDD.md
+- **구현 / 문서 근거 [source_read_confirmed]**: 현재5명 고정배치이며 새편성메뉴를 만들지 않았다. HUD첫줄4라벨/둘째줄우선행동, 전사·분노·결과경고 우선.
+- **근거 파일**: D:/CodexBuilds/workspaces/12_NIKKE-matchup/Assets/Scripts/UI/CombatAdvisorUI.cs
+- **구현 / 문서 근거 [source_read_confirmed]**: WaveSystem실제출현수/간격에서5초선행예고, 실제splashRadius와생존여부로엄호역할추천, 전사뒤예고재계산.
+- **근거 파일**: D:/CodexBuilds/workspaces/12_NIKKE-matchup/Assets/Scripts/Systems/WaveSystem.cs
+- **구현 / 문서 근거 [task_context_pending_design]**: 아트/UI 레퍼런스 후속작업은 사용자시안검토선호에 따라 HTML시안검토 단계이며 게임코드/씬에 구현한 상태가 아니다.
+- **근거 파일**: D:/CodexBuilds/workspaces/12_NIKKE-matchup/docs/SquadVsMonster_GDD.md
+- **이전 검증 기록 (이번 재실행 아님)**: 2026-11-04 Unity2022.3.62f3 EditMode62/62, Windowsnativebuild성공. 증거 D:/CodexBuilds/tasks/12-matchup-20261104/editmode-verified.xml 및result.json. 감사중재실행없음.
+- **이전 검증 기록 (이번 재실행 아님)**: 동일날부모가1280x720 실제초기화면2행HUD비겹침확인.
+- **미완료 / 제한**: CUA창소실/foregroundPID오류로조준·결과·재시작E2E부분검증. 정상종료로그/예외없으나원인미확정.
+- **미완료 / 제한**: 후속UI시안은승인전이며구현완료로합치지않는다.
+- **다음 행동**: 사용자시안검토를반영한뒤HUD-only수정범위를정하고안정적네이티브입력검증경로를확보한다.
+- **UI 시안 상태**: 2026-11-04 레이아웃은 비교 시안 단계. 사용자 방향 조정 전이며 해당 시안의 게임 코드 반영 완료를 뜻하지 않는다.
+
+<!-- PORTFOLIO-GDD-20261104:END -->
+
+
+
 - 문서 유형: 게임 디자인 문서(GDD)
 - 문서 버전: 2.0
 - 최신화: 2026-11-04 (KST)
